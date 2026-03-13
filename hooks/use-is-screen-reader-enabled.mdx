@@ -1,0 +1,357 @@
+---
+title: 'useIsScreenReaderEnabled'
+description: 'Detect screen reader accessibility mode'
+---
+
+`useIsScreenReaderEnabled` is a React hook that returns whether a screen reader is currently enabled. This allows you to render different output optimized for screen reader users.
+
+## Import
+
+```jsx
+import {useIsScreenReaderEnabled} from 'ink';
+```
+
+## Signature
+
+```typescript
+useIsScreenReaderEnabled(): boolean
+```
+
+## Return Value
+
+Returns `true` if a screen reader is detected, `false` otherwise.
+
+## Examples
+
+### Basic Screen Reader Detection
+
+Render different content for screen reader users:
+
+```jsx
+import {useIsScreenReaderEnabled, Text} from 'ink';
+
+const App = () => {
+  const isScreenReaderEnabled = useIsScreenReaderEnabled();
+
+  return (
+    <Text>
+      {isScreenReaderEnabled
+        ? 'Screen reader is enabled'
+        : 'Screen reader is disabled'}
+    </Text>
+  );
+};
+```
+
+### Accessible Descriptions
+
+Add detailed descriptions for screen readers:
+
+```jsx
+import {Box, Text, useIsScreenReaderEnabled} from 'ink';
+
+const ProgressBar = ({progress, label}) => {
+  const isScreenReaderEnabled = useIsScreenReaderEnabled();
+
+  if (isScreenReaderEnabled) {
+    // Text-only description for screen readers
+    return (
+      <Text>
+        {label}: {progress}% complete
+      </Text>
+    );
+  }
+
+  // Visual progress bar for sighted users
+  const filled = Math.round(progress / 5);
+  const empty = 20 - filled;
+
+  return (
+    <Box>
+      <Text>{label}: [</Text>
+      <Text color="green">{'█'.repeat(filled)}</Text>
+      <Text dimColor>{'░'.repeat(empty)}</Text>
+      <Text>] {progress}%</Text>
+    </Box>
+  );
+};
+```
+
+### Skip Visual Decorations
+
+Omit decorative elements for screen readers:
+
+```jsx
+import {Box, Text, useIsScreenReaderEnabled} from 'ink';
+
+const Card = ({title, content}) => {
+  const isScreenReaderEnabled = useIsScreenReaderEnabled();
+
+  if (isScreenReaderEnabled) {
+    // Simple, linear layout for screen readers
+    return (
+      <Box flexDirection="column">
+        <Text bold>{title}</Text>
+        <Text>{content}</Text>
+      </Box>
+    );
+  }
+
+  // Visual card with decorations
+  return (
+    <Box borderStyle="round" padding={1} flexDirection="column">
+      <Text bold color="cyan">✨ {title}</Text>
+      <Box marginTop={1}>
+        <Text>{content}</Text>
+      </Box>
+    </Box>
+  );
+};
+```
+
+### Icon Alternatives
+
+Provide text alternatives for icons:
+
+```jsx
+import {Text, useIsScreenReaderEnabled} from 'ink';
+
+const Status = ({status}) => {
+  const isScreenReaderEnabled = useIsScreenReaderEnabled();
+
+  const statusMap = {
+    success: {
+      icon: '✓',
+      text: 'Success',
+      color: 'green'
+    },
+    error: {
+      icon: '✗',
+      text: 'Error',
+      color: 'red'
+    },
+    warning: {
+      icon: '⚠',
+      text: 'Warning',
+      color: 'yellow'
+    }
+  };
+
+  const {icon, text, color} = statusMap[status];
+
+  return (
+    <Text color={color}>
+      {isScreenReaderEnabled ? text : `${icon} ${text}`}
+    </Text>
+  );
+};
+```
+
+### Table Accessibility
+
+Render tables differently for screen readers:
+
+```jsx
+import {Box, Text, useIsScreenReaderEnabled} from 'ink';
+
+const Table = ({data}) => {
+  const isScreenReaderEnabled = useIsScreenReaderEnabled();
+
+  if (isScreenReaderEnabled) {
+    // Linear list format for screen readers
+    return (
+      <Box flexDirection="column">
+        {data.map((row, i) => (
+          <Box key={i} flexDirection="column" marginBottom={1}>
+            <Text bold>Item {i + 1}:</Text>
+            <Text>Name: {row.name}</Text>
+            <Text>Status: {row.status}</Text>
+            <Text>Count: {row.count}</Text>
+          </Box>
+        ))}
+      </Box>
+    );
+  }
+
+  // Visual table for sighted users
+  return (
+    <Box flexDirection="column">
+      <Box>
+        <Box width={20}><Text bold>Name</Text></Box>
+        <Box width={15}><Text bold>Status</Text></Box>
+        <Box width={10}><Text bold>Count</Text></Box>
+      </Box>
+      {data.map((row, i) => (
+        <Box key={i}>
+          <Box width={20}><Text>{row.name}</Text></Box>
+          <Box width={15}><Text>{row.status}</Text></Box>
+          <Box width={10}><Text>{row.count}</Text></Box>
+        </Box>
+      ))}
+    </Box>
+  );
+};
+```
+
+### Navigation Instructions
+
+Provide screen reader-friendly navigation help:
+
+```jsx
+import {Box, Text, useIsScreenReaderEnabled} from 'ink';
+
+const Menu = ({items}) => {
+  const isScreenReaderEnabled = useIsScreenReaderEnabled();
+
+  return (
+    <Box flexDirection="column">
+      {isScreenReaderEnabled ? (
+        <Text>
+          Menu with {items.length} items. Use Tab to navigate between items, 
+          Enter to select.
+        </Text>
+      ) : (
+        <Text dimColor>Use arrow keys to navigate, Enter to select</Text>
+      )}
+      {/* Menu items */}
+    </Box>
+  );
+};
+```
+
+### Skip Animations
+
+Disable animations for screen readers:
+
+```jsx
+import {useState, useEffect} from 'react';
+import {Text, useIsScreenReaderEnabled} from 'ink';
+
+const LoadingSpinner = () => {
+  const [frame, setFrame] = useState(0);
+  const isScreenReaderEnabled = useIsScreenReaderEnabled();
+  const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+
+  useEffect(() => {
+    if (isScreenReaderEnabled) {
+      // No animation for screen readers
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setFrame(f => (f + 1) % frames.length);
+    }, 80);
+
+    return () => clearInterval(timer);
+  }, [isScreenReaderEnabled]);
+
+  if (isScreenReaderEnabled) {
+    return <Text>Loading...</Text>;
+  }
+
+  return <Text>{frames[frame]} Loading...</Text>;
+};
+```
+
+### Chart Alternatives
+
+Provide data summaries instead of charts:
+
+```jsx
+import {Box, Text, useIsScreenReaderEnabled} from 'ink';
+
+const BarChart = ({data}) => {
+  const isScreenReaderEnabled = useIsScreenReaderEnabled();
+
+  if (isScreenReaderEnabled) {
+    // Text summary for screen readers
+    const total = data.reduce((sum, item) => sum + item.value, 0);
+    const max = Math.max(...data.map(item => item.value));
+    const maxItem = data.find(item => item.value === max);
+
+    return (
+      <Box flexDirection="column">
+        <Text>Chart data summary:</Text>
+        <Text>Total items: {data.length}</Text>
+        <Text>Total value: {total}</Text>
+        <Text>Highest: {maxItem.label} with value {max}</Text>
+        <Box marginTop={1} flexDirection="column">
+          {data.map(item => (
+            <Text key={item.label}>
+              {item.label}: {item.value}
+            </Text>
+          ))}
+        </Box>
+      </Box>
+    );
+  }
+
+  // Visual bar chart
+  const maxValue = Math.max(...data.map(item => item.value));
+  return (
+    <Box flexDirection="column">
+      {data.map(item => {
+        const barLength = Math.round((item.value / maxValue) * 20);
+        return (
+          <Box key={item.label}>
+            <Box width={15}>
+              <Text>{item.label}:</Text>
+            </Box>
+            <Text color="cyan">
+              {'█'.repeat(barLength)}
+            </Text>
+            <Text> {item.value}</Text>
+          </Box>
+        );
+      })}
+    </Box>
+  );
+};
+```
+
+## Detection Method
+
+Ink detects screen readers by checking environment variables and system settings:
+
+- **macOS**: Checks VoiceOver status via system APIs
+- **Windows**: Checks for NVDA, JAWS, or Narrator
+- **Linux**: Checks for Orca via environment variables
+- **Environment variable**: `TERM_SCREEN_READER=1` can be set manually
+
+## Accessibility Best Practices
+
+### Do:
+- Provide text alternatives for visual elements
+- Use clear, descriptive labels
+- Maintain logical reading order
+- Simplify complex layouts for screen readers
+- Test with actual screen readers
+
+### Don't:
+- Remove important information for screen reader users
+- Use color as the only indicator of meaning
+- Create overly verbose alternatives
+- Assume all screen reader users have the same needs
+
+## Notes
+
+<Note>
+  Screen reader detection is not always 100% accurate. Some screen readers may not be detected, and the detection may vary by platform.
+</Note>
+
+<Note>
+  This hook checks the accessibility context which is determined when the app starts. It does not detect if a screen reader is enabled after the app has started.
+</Note>
+
+<Note>
+  Providing screen reader-friendly alternatives doesn't mean removing visual styling entirely. Many screen reader users can still see, so maintain good visual design while adding text alternatives.
+</Note>
+
+<Warning>
+  Don't hide essential functionality behind screen reader detection. All users should be able to access core features regardless of accessibility mode.
+</Warning>
+
+## Related Hooks
+
+- [useInput](/hooks/use-input) - Ensure keyboard navigation works for all users
+- [useFocus](/hooks/use-focus) - Provide clear focus indicators for navigation

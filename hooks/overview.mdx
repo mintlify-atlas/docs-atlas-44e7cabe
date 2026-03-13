@@ -1,0 +1,166 @@
+---
+title: 'Hooks Overview'
+description: 'React hooks provided by Ink for building interactive CLI applications'
+---
+
+Ink provides a collection of React hooks that give you access to terminal features, user input, focus management, and app lifecycle controls. These hooks follow React conventions and integrate seamlessly with your components.
+
+## Available Hooks
+
+<CardGroup cols={2}>
+  <Card title="useInput" icon="keyboard" href="/hooks/use-input">
+    Handle keyboard input from users
+  </Card>
+  
+  <Card title="usePaste" icon="paste" href="/hooks/use-paste">
+    Handle pasted text in the terminal
+  </Card>
+  
+  <Card title="useApp" icon="window-maximize" href="/hooks/use-app">
+    Control app lifecycle and exit behavior
+  </Card>
+  
+  <Card title="useFocus" icon="bullseye" href="/hooks/use-focus">
+    Make components focusable and check focus state
+  </Card>
+  
+  <Card title="useFocusManager" icon="list-check" href="/hooks/use-focus-manager">
+    Manage focus across multiple components
+  </Card>
+  
+  <Card title="useStdin" icon="terminal" href="/hooks/use-stdin">
+    Access the stdin stream and raw mode controls
+  </Card>
+  
+  <Card title="useStdout" icon="arrow-right" href="/hooks/use-stdout">
+    Access the stdout stream and write methods
+  </Card>
+  
+  <Card title="useStderr" icon="exclamation-triangle" href="/hooks/use-stderr">
+    Access the stderr stream for error output
+  </Card>
+  
+  <Card title="useCursor" icon="i-cursor" href="/hooks/use-cursor">
+    Control terminal cursor position for IME support
+  </Card>
+  
+  <Card title="useWindowSize" icon="expand" href="/hooks/use-window-size">
+    Get terminal dimensions and handle resize events
+  </Card>
+  
+  <Card title="useBoxMetrics" icon="ruler-combined" href="/hooks/use-box-metrics">
+    Measure box dimensions and position
+  </Card>
+  
+  <Card title="useIsScreenReaderEnabled" icon="universal-access" href="/hooks/use-is-screen-reader-enabled">
+    Detect screen reader accessibility mode
+  </Card>
+</CardGroup>
+
+## Hook Categories
+
+### Input Handling
+
+- **[useInput](/hooks/use-input)** - Capture keyboard input with support for special keys, modifiers, and key combinations
+- **[usePaste](/hooks/use-paste)** - Handle pasted text separately from typed input using bracketed paste mode
+
+### Focus Management
+
+- **[useFocus](/hooks/use-focus)** - Make individual components focusable and respond to Tab navigation
+- **[useFocusManager](/hooks/use-focus-manager)** - Programmatically control focus across your entire application
+
+### App Lifecycle
+
+- **[useApp](/hooks/use-app)** - Exit the application gracefully and wait for render flushes
+
+### Terminal I/O
+
+- **[useStdin](/hooks/use-stdin)** - Access stdin stream and control raw mode for custom input handling
+- **[useStdout](/hooks/use-stdout)** - Write to stdout outside of React's rendering pipeline
+- **[useStderr](/hooks/use-stderr)** - Write error messages and logs to stderr
+
+### Layout & Measurement
+
+- **[useBoxMetrics](/hooks/use-box-metrics)** - Track the computed dimensions and position of box elements
+- **[useWindowSize](/hooks/use-window-size)** - Respond to terminal window resizing
+- **[useCursor](/hooks/use-cursor)** - Position the cursor for IME (Input Method Editor) support
+
+### Accessibility
+
+- **[useIsScreenReaderEnabled](/hooks/use-is-screen-reader-enabled)** - Render different output for screen reader users
+
+## Common Patterns
+
+### Building an Interactive Input
+
+Combine `useInput`, `usePaste`, and `useFocus` to create rich input components:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useInput, usePaste, useFocus} from 'ink';
+
+const TextInput = () => {
+  const [value, setValue] = useState('');
+  const {isFocused} = useFocus();
+
+  useInput((input, key) => {
+    if (key.backspace) {
+      setValue(v => v.slice(0, -1));
+    } else if (!key.return && input) {
+      setValue(v => v + input);
+    }
+  }, {isActive: isFocused});
+
+  usePaste((text) => {
+    setValue(v => v + text);
+  }, {isActive: isFocused});
+
+  return (
+    <Box>
+      <Text>{isFocused ? '> ' : '  '}</Text>
+      <Text>{value}</Text>
+    </Box>
+  );
+};
+```
+
+### Responsive Layout
+
+Use `useWindowSize` to adapt your layout to terminal dimensions:
+
+```jsx
+import {Box, Text, useWindowSize} from 'ink';
+
+const ResponsiveLayout = () => {
+  const {columns, rows} = useWindowSize();
+  const isNarrow = columns < 80;
+
+  return (
+    <Box flexDirection={isNarrow ? 'column' : 'row'}>
+      <Text>Adapts to terminal size: {columns}x{rows}</Text>
+    </Box>
+  );
+};
+```
+
+### Graceful Exit
+
+Use `useApp` to handle cleanup before exiting:
+
+```jsx
+import {useEffect} from 'react';
+import {useApp, useInput, Text} from 'ink';
+
+const MyApp = () => {
+  const {exit} = useApp();
+
+  useInput((input) => {
+    if (input === 'q') {
+      // Perform cleanup, then exit
+      exit();
+    }
+  });
+
+  return <Text>Press 'q' to quit</Text>;
+};
+```

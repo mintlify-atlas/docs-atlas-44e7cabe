@@ -1,0 +1,57 @@
+---
+title: useFocus
+description: Hook for managing component focus state
+---
+
+A React hook that returns focus state and focus controls for the current component. A component that uses the `useFocus` hook becomes "focusable" to Ink, so when the user presses <kbd>Tab</kbd>, Ink will switch focus to this component. If there are multiple components that execute the `useFocus` hook, focus will be given to them in the order in which these components are rendered.
+
+## Signature
+
+```typescript
+const useFocus = (options?: Input) => Output
+```
+
+## Parameters
+
+<ParamField path="options" type="Input">
+  Optional configuration object.
+</ParamField>
+
+<ParamField path="options.isActive" type="boolean" default="true">
+  Enable or disable this component's focus, while still maintaining its position in the list of focusable components.
+</ParamField>
+
+<ParamField path="options.autoFocus" type="boolean" default="false">
+  Auto-focus this component if there's no active (focused) component right now.
+</ParamField>
+
+<ParamField path="options.id" type="string">
+  Assign an ID to this component, so it can be programmatically focused with `focus(id)`.
+</ParamField>
+
+## Return Value
+
+<ResponseField name="isFocused" type="boolean">
+  Determines whether this component is focused.
+</ResponseField>
+
+<ResponseField name="focus" type="(id: string) => void">
+  Allows focusing a specific element with the provided `id`.
+</ResponseField>
+
+## Example
+
+```tsx
+import {useFocus, Text} from 'ink';
+
+const Focus = () => {
+  const {isFocused} = useFocus();
+
+  return (
+    <Text>
+      {isFocused ? '> ' : '  '}
+      I am {isFocused ? 'focused' : 'unfocused'}
+    </Text>
+  );
+};
+```

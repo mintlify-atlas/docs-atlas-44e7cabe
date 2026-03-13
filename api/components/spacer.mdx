@@ -1,0 +1,173 @@
+---
+title: Spacer
+description: Flexible space that expands to fill available space
+---
+
+A flexible space that expands along the major axis of its containing layout.
+
+It's useful as a shortcut for filling all the available space between elements.
+
+## Component Signature
+
+```tsx
+import {Box, Text, Spacer} from 'ink';
+
+function Component() {
+  return (
+    <Box>
+      <Text>Left</Text>
+      <Spacer />
+      <Text>Right</Text>
+    </Box>
+  );
+}
+```
+
+## Props
+
+`<Spacer>` does not accept any props. It's implemented as `<Box flexGrow={1} />`.
+
+## Examples
+
+### Horizontal Spacing
+
+```tsx
+import {Box, Text, Spacer} from 'ink';
+
+function Example() {
+  return (
+    <Box>
+      <Text>Left</Text>
+      <Spacer />
+      <Text>Right</Text>
+    </Box>
+  );
+}
+// Output:
+// Left                    Right
+```
+
+### Vertical Spacing
+
+```tsx
+import {Box, Text, Spacer} from 'ink';
+
+function Example() {
+  return (
+    <Box flexDirection="column" height={10}>
+      <Text>Top</Text>
+      <Spacer />
+      <Text>Bottom</Text>
+    </Box>
+  );
+}
+// Output:
+// Top
+//
+//
+//
+// Bottom
+```
+
+### Multiple Spacers
+
+```tsx
+import {Box, Text, Spacer} from 'ink';
+
+function Example() {
+  return (
+    <Box>
+      <Text>Start</Text>
+      <Spacer />
+      <Text>Middle</Text>
+      <Spacer />
+      <Text>End</Text>
+    </Box>
+  );
+}
+// Output: Elements evenly distributed across the width
+```
+
+### Navigation Bar
+
+```tsx
+import {Box, Text, Spacer} from 'ink';
+
+function NavBar() {
+  return (
+    <Box borderStyle="single" paddingX={1}>
+      <Text color="blue" bold>MyApp</Text>
+      <Spacer />
+      <Text>Home</Text>
+      <Text> | </Text>
+      <Text>About</Text>
+      <Text> | </Text>
+      <Text>Contact</Text>
+    </Box>
+  );
+}
+```
+
+### Status Bar
+
+```tsx
+import {Box, Text, Spacer} from 'ink';
+
+function StatusBar({status, time}: {status: string; time: string}) {
+  return (
+    <Box width="100%" borderStyle="round">
+      <Box paddingX={1}>
+        <Text>Status: </Text>
+        <Text color="green">{status}</Text>
+      </Box>
+      <Spacer />
+      <Box paddingX={1}>
+        <Text dimColor>{time}</Text>
+      </Box>
+    </Box>
+  );
+}
+```
+
+### Center Content
+
+```tsx
+import {Box, Text, Spacer} from 'ink';
+
+function Example() {
+  return (
+    <Box width="100%">
+      <Spacer />
+      <Text>Centered Content</Text>
+      <Spacer />
+    </Box>
+  );
+}
+```
+
+### Right-Align Content
+
+```tsx
+import {Box, Text, Spacer} from 'ink';
+
+function Example() {
+  return (
+    <Box width="100%">
+      <Spacer />
+      <Text>Right-aligned</Text>
+    </Box>
+  );
+}
+```
+
+## Implementation Note
+
+`<Spacer>` is internally implemented as:
+
+```tsx
+function Spacer() {
+  return <Box flexGrow={1} />;
+}
+```
+
+This means it behaves like a flex item with `flexGrow={1}`, expanding to fill all available space along the main axis of its container.

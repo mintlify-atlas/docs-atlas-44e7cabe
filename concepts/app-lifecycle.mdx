@@ -1,0 +1,198 @@
+---
+title: App Lifecycle
+description: Understanding how Ink applications start, run, and exit
+---
+
+## Overview
+
+An Ink app is a Node.js process that uses React to render terminal output. Understanding the app lifecycle is crucial for building reliable CLI applications.
+
+## The Event Loop
+
+An Ink app stays alive only while there is active work in the Node.js event loop. This includes:
+
+- Timers (`setTimeout`, `setInterval`)
+- Pending promises
+- Active listeners (like `useInput` listening on `stdin`)
+- Any other async operations
+
+<Note>
+If your component tree has no async work, the app will render once and exit immediately.
+</Note>
+
+## Starting an App
+
+Use the `render()` function to mount your component and start rendering:
+
+```jsx
+import {render, Text} from 'ink';
+
+const MyApp = () => <Text>Hello World</Text>;
+
+render(<MyApp />);
+```
+
+The `render()` function returns an instance object with lifecycle methods:
+
+```jsx
+const {unmount, waitUntilExit, rerender, clear} = render(<MyApp />);
+```
+
+## Keeping the App Running
+
+Here's a simple counter that keeps running with a timer:
+
+```jsx
+import React, {useState, useEffect} from 'react';
+import {render, Text} from 'ink';
+
+function Counter() {
+  const [counter, setCounter] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCounter(prevCounter => prevCounter + 1);
+    }, 100);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+
+  return <Text color="green">{counter} tests passed</Text>;
+}
+
+render(<Counter />);
+```
+
+## Exiting the App
+
+There are several ways to exit an Ink app:
+
+### 1. Press Ctrl+C (Default)
+
+By default, Ink listens for Ctrl+C and exits the app. You can disable this behavior:
+
+```jsx
+render(<MyApp />, {exitOnCtrlC: false});
+```
+
+### 2. Call `exit()` from `useApp` Hook
+
+Exit programmatically from within a component:
+
+```jsx
+import {useApp, useInput, Text} from 'ink';
+
+const MyApp = () => {
+  const {exit} = useApp();
+
+  useInput((input, key) => {
+    if (input === 'q') {
+      exit();
+    }
+  });
+
+  return <Text>Press "q" to exit</Text>;
+};
+```
+
+### 3. Call `unmount()` on Render Instance
+
+Exit from outside your component:
+
+```jsx
+const {unmount} = render(<MyApp />);
+
+// Exit after 5 seconds
+setTimeout(() => {
+  unmount();
+}, 5000);
+```
+
+## Waiting for Exit
+
+Use `waitUntilExit()` to run code after the app exits:
+
+```jsx
+const {waitUntilExit} = render(<MyApp />);
+
+await waitUntilExit();
+
+console.log('App exited');
+```
+
+### Returning Values on Exit
+
+You can pass values or errors when exiting:
+
+```jsx
+const MyApp = () => {
+  const {exit} = useApp();
+
+  // Exit with a value
+  exit({success: true, data: 'result'});
+
+  // Exit with an error
+  exit(new Error('Something went wrong'));
+};
+```
+
+Then handle the result:
+
+```jsx
+const {waitUntilExit} = render(<MyApp />);
+
+try {
+  const result = await waitUntilExit();
+  console.log('Success:', result);
+} catch (error) {
+  console.error('Error:', error);
+}
+```
+
+## Render Flushing
+
+Use `waitUntilRenderFlush()` to wait until output is written to stdout:
+
+```jsx
+const {rerender, waitUntilRenderFlush} = render(<MyApp step="loading" />);
+
+rerender(<MyApp step="ready" />);
+await waitUntilRenderFlush();
+
+// Output for "ready" is now visible
+runNextCommand();
+```
+
+This is useful when you need to ensure output is visible before running external commands.
+
+## Re-rendering
+
+Update the root component by calling `rerender()`:
+
+```jsx
+const {rerender} = render(<Counter count={1} />);
+
+// Update props
+rerender(<Counter count={2} />);
+
+// Replace with different component
+rerender(<NewComponent />);
+```
+
+<Warning>
+Ink keeps one live renderer per stdout. Calling `render()` again on the same stdout before unmounting is unsupported.
+</Warning>
+
+## Lifecycle Summary
+
+1. **Mount** - `render()` is called, React tree is mounted
+2. **Run** - App stays alive while event loop has work
+3. **Unmount** - App exits via Ctrl+C, `exit()`, or `unmount()`
+4. **Cleanup** - React cleanup functions run, output is flushed
+5. **Exit** - `waitUntilExit()` promise settles, process can exit
+
+<Tip>
+Always clean up resources (timers, listeners) in React cleanup functions to prevent memory leaks and ensure proper shutdown.
+</Tip>

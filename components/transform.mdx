@@ -1,0 +1,387 @@
+---
+title: Transform
+description: Transform string output before rendering for gradients, effects, and modifications
+icon: wand-magic-sparkles
+---
+
+The `<Transform>` component lets you transform the string representation of React components before they're written to output. This is useful for applying gradients, adding clickable links, creating text effects, or any other string manipulation that can't accept React nodes as input.
+
+<Note>
+  `<Transform>` gives you the final string output of its children and lets you modify it before rendering.
+</Note>
+
+## When to Use Transform
+
+`<Transform>` is perfect for:
+
+- **Gradient text** - Apply color gradients using libraries like [ink-gradient](https://github.com/sindresorhus/ink-gradient)
+- **Clickable links** - Add terminal hyperlinks using [ink-link](https://github.com/sindresorhus/ink-link)
+- **Text effects** - Create ASCII art or special effects with [ink-big-text](https://github.com/sindresorhus/ink-big-text)
+- **Custom formatting** - Apply any string transformation that needs the final output
+
+## Basic Usage
+
+```jsx
+import {render, Transform, Text} from 'ink';
+
+const App = () => (
+  <Transform transform={output => output.toUpperCase()}>
+    <Text>Hello World</Text>
+  </Transform>
+);
+
+render(<App />);
+// Output: HELLO WORLD
+```
+
+## Props
+
+### transform
+
+<ParamField path="transform" type="function" required>
+  Function that transforms the output string.
+  
+  **Parameters:**
+  - `children` (string) - The rendered output of child components
+  - `index` (number) - Zero-indexed line number (for multi-line output)
+  
+  **Returns:** Transformed string
+</ParamField>
+
+```jsx
+<Transform transform={(output) => output.toUpperCase()}>
+  <Text>hello</Text>
+</Transform>
+// Output: HELLO
+```
+
+### accessibilityLabel
+
+<ParamField path="accessibilityLabel" type="string">
+  Screen-reader-specific text to output. When set, all children are ignored for screen readers.
+</ParamField>
+
+```jsx
+<Transform 
+  transform={output => applyGradient(output)}
+  accessibilityLabel="Success message"
+>
+  <Text>✓ Done</Text>
+</Transform>
+```
+
+## Single-Line Transforms
+
+For simple transformations, the `index` parameter isn't needed:
+
+```jsx
+// Convert to uppercase
+<Transform transform={output => output.toUpperCase()}>
+  <Text>hello world</Text>
+</Transform>
+// Output: HELLO WORLD
+
+// Add prefix
+<Transform transform={output => `> ${output}`}>
+  <Text>Quote this text</Text>
+</Transform>
+// Output: > Quote this text
+
+// Reverse string
+<Transform transform={output => output.split('').reverse().join('')}>
+  <Text>hello</Text>
+</Transform>
+// Output: olleh
+```
+
+## Multi-Line Transforms
+
+When output wraps to multiple lines, the `index` parameter tells you which line is being processed:
+
+```jsx
+import {Transform, Text} from 'ink';
+
+const HangingIndent = ({indent = 4, children}) => (
+  <Transform
+    transform={(line, index) =>
+      index === 0 ? line : ' '.repeat(indent) + line
+    }
+  >
+    {children}
+  </Transform>
+);
+
+const App = () => (
+  <HangingIndent indent={4}>
+    <Text>
+      This is a long paragraph that will wrap to multiple lines,
+      and all lines after the first will be indented by 4 spaces.
+    </Text>
+  </HangingIndent>
+);
+```
+
+## Working with ANSI Codes
+
+<Warning>
+  When children use `<Text>` styling props (color, bold, etc.), the string passed to `transform` will contain ANSI escape codes.
+</Warning>
+
+If your transformation manipulates whitespace or does string operations, you may need ANSI-aware methods:
+
+```jsx
+import sliceAnsi from 'slice-ansi';
+import stripAnsi from 'strip-ansi';
+
+// ❌ Wrong - breaks ANSI codes
+<Transform transform={output => output.substring(0, 10)}>
+  <Text color="red">Hello World</Text>
+</Transform>
+
+// ✅ Correct - ANSI-aware slicing
+<Transform transform={output => sliceAnsi(output, 0, 10)}>
+  <Text color="red">Hello World</Text>
+</Transform>
+
+// ✅ Strip ANSI codes first, then transform
+<Transform transform={output => stripAnsi(output).toUpperCase()}>
+  <Text color="green" bold>styled text</Text>
+</Transform>
+```
+
+## Real-World Examples
+
+### Line Numbers
+
+```jsx
+const LineNumbers = ({children}) => (
+  <Transform transform={(line, index) => `${index + 1} | ${line}`}>
+    {children}
+  </Transform>
+);
+
+const App = () => (
+  <LineNumbers>
+    <Text>
+      First line{' \n'}
+      Second line{' \n'}
+      Third line
+    </Text>
+  </LineNumbers>
+);
+// Output:
+// 1 | First line
+// 2 | Second line
+// 3 | Third line
+```
+
+### Markdown-Style Quotes
+
+```jsx
+const Quote = ({children}) => (
+  <Transform transform={(line) => `> ${line}`}>
+    {children}
+  </Transform>
+);
+
+const App = () => (
+  <Quote>
+    <Text dimColor>
+      This is a quoted block of text that looks like
+      a markdown blockquote.
+    </Text>
+  </Quote>
+);
+```
+
+### Hanging Indent
+
+```jsx
+import {Transform, Text} from 'ink';
+
+const HangingIndent = ({indent = 4, children}) => (
+  <Transform
+    transform={(line, index) =>
+      index === 0 ? line : ' '.repeat(indent) + line
+    }
+  >
+    {children}
+  </Transform>
+);
+
+const text =
+  'WHEN I WROTE the following pages, or rather the bulk of them, ' +
+  'I lived alone, in the woods, a mile from any neighbor, in a ' +
+  'house which I had built myself, on the shore of Walden Pond, ' +
+  'in Concord, Massachusetts, and earned my living by the labor ' +
+  'of my hands only.';
+
+render(
+  <HangingIndent indent={4}>
+    <Text>{text}</Text>
+  </HangingIndent>
+);
+```
+
+### Bullet Points
+
+```jsx
+const BulletList = ({items}) => (
+  <Transform transform={(line, index) => `• ${line}`}>
+    {items.map((item, i) => (
+      <Text key={i}>
+        {item}
+        {i < items.length - 1 && '\n'}
+      </Text>
+    ))}
+  </Transform>
+);
+
+const App = () => (
+  <BulletList
+    items={[
+      'First item',
+      'Second item',
+      'Third item'
+    ]}
+  />
+);
+```
+
+### ASCII Art Border
+
+```jsx
+const FancyBox = ({children}) => (
+  <Transform
+    transform={(line, index, total) => {
+      if (index === 0) return `╔═══ ${line} ═══╗`;
+      if (index === total - 1) return `╚═══ ${line} ═══╝`;
+      return `║ ${line} ║`;
+    }}
+  >
+    {children}
+  </Transform>
+);
+```
+
+### Character Counter
+
+```jsx
+import stripAnsi from 'strip-ansi';
+
+const WithLength = ({children}) => (
+  <Transform
+    transform={(output) => {
+      const length = stripAnsi(output).length;
+      return `${output} (${length} chars)`;
+    }}
+  >
+    {children}
+  </Transform>
+);
+
+const App = () => (
+  <WithLength>
+    <Text color="green" bold>Hello World</Text>
+  </WithLength>
+);
+// Output: Hello World (11 chars)
+```
+
+## Common Patterns
+
+### Combining with Text Styles
+
+```jsx
+<Transform transform={output => output.toUpperCase()}>
+  <Text color="blue" bold>
+    this will be blue, bold, and uppercase
+  </Text>
+</Transform>
+```
+
+### Nested Transforms
+
+```jsx
+<Transform transform={output => `[${output}]`}>
+  <Transform transform={output => output.toUpperCase()}>
+    <Text>hello</Text>
+  </Transform>
+</Transform>
+// Output: [HELLO]
+```
+
+### Conditional Transforms
+
+```jsx
+const MaybeUppercase = ({uppercase, children}) => (
+  <Transform 
+    transform={output => uppercase ? output.toUpperCase() : output}
+  >
+    {children}
+  </Transform>
+);
+```
+
+## Important Notes
+
+<Warning>
+  `<Transform>` must be applied only to `<Text>` children and shouldn't change the dimensions of the output. Changing dimensions will break the layout.
+</Warning>
+
+```jsx
+{/* ✅ Correct - same dimensions */}
+<Transform transform={output => output.toUpperCase()}>
+  <Text>hello</Text>
+</Transform>
+
+{/* ❌ Wrong - changes dimensions */}
+<Transform transform={output => output + ' extra text'}>
+  <Text>hello</Text>
+</Transform>
+
+{/* ❌ Wrong - adds new lines */}
+<Transform transform={output => output + '\n\n'}>
+  <Text>hello</Text>
+</Transform>
+```
+
+<Info>
+  Safe transformations:
+  - Case changes (uppercase, lowercase)
+  - Character substitution (same length)
+  - ANSI code additions (colors, styles)
+  - Reversing strings
+  
+  Unsafe transformations:
+  - Adding/removing characters
+  - Adding/removing lines
+  - Changing string length
+</Info>
+
+## Popular Transform Libraries
+
+These libraries work great with `<Transform>`:
+
+- **[ink-gradient](https://github.com/sindresorhus/ink-gradient)** - Apply color gradients
+- **[ink-link](https://github.com/sindresorhus/ink-link)** - Create clickable terminal links
+- **[ink-big-text](https://github.com/sindresorhus/ink-big-text)** - Create large ASCII text
+- **[chalk](https://github.com/chalk/chalk)** - Additional text styling
+- **[slice-ansi](https://github.com/chalk/slice-ansi)** - ANSI-aware string slicing
+- **[strip-ansi](https://github.com/chalk/strip-ansi)** - Remove ANSI codes
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Text" href="/components/text">
+    Display and style text output
+  </Card>
+  
+  <Card title="Box" href="/components/box">
+    Container for layout and positioning
+  </Card>
+  
+  <Card title="Text Styling" href="/concepts/text-styling">
+    Learn about text styling in Ink
+  </Card>
+</CardGroup>

@@ -1,0 +1,287 @@
+---
+title: 'useStdout'
+description: 'Access the stdout stream and write methods'
+---
+
+`useStdout` is a React hook that provides access to the stdout stream where Ink renders your app, plus utilities to write to stdout outside of React's rendering pipeline.
+
+## Import
+
+```jsx
+import {useStdout} from 'ink';
+```
+
+## Signature
+
+```typescript
+useStdout(): {
+  stdout: stream.Writable;
+  write: (data: string) => void;
+}
+```
+
+## Return Value
+
+<ResponseField name="stdout" type="stream.Writable">
+  The stdout stream passed to `render()` in options, or `process.stdout` by default.
+</ResponseField>
+
+<ResponseField name="write" type="function">
+  Write any string to stdout while preserving Ink's output. It's useful when you want to display external information outside of Ink's rendering and ensure there's no conflict between the two.
+  
+  <Expandable title="Parameters">
+    <ParamField path="data" type="string">
+      The data to write to stdout. Should typically end with a newline (`\n`).
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+## Examples
+
+### Write to Stdout
+
+Write messages above Ink's output:
+
+```jsx
+import {useEffect} from 'react';
+import {useStdout, Text} from 'ink';
+
+const App = () => {
+  const {write} = useStdout();
+
+  useEffect(() => {
+    // Write a message above Ink's output
+    write('Hello from Ink to stdout\n');
+  }, [write]);
+
+  return <Text>This is rendered by Ink</Text>;
+};
+```
+
+### Periodic Logging
+
+Log messages periodically without affecting Ink's UI:
+
+```jsx
+import {useEffect, useState} from 'react';
+import {useStdout, Text, Box} from 'ink';
+
+const Logger = () => {
+  const {write} = useStdout();
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      write(`Log message ${Date.now()}\n`);
+      setCount(c => c + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [write]);
+
+  return (
+    <Box flexDirection="column">
+      <Text>Messages written: {count}</Text>
+      <Text dimColor>Check above for log output</Text>
+    </Box>
+  );
+};
+```
+
+### Terminal Dimensions
+
+Access stdout properties like terminal dimensions:
+
+```jsx
+import {useStdout, Box, Text} from 'ink';
+
+const TerminalInfo = () => {
+  const {stdout} = useStdout();
+
+  return (
+    <Box flexDirection="column" paddingX={2} paddingY={1}>
+      <Text bold underline>Terminal Dimensions:</Text>
+      <Box marginTop={1}>
+        <Text>Width: <Text bold>{stdout.columns}</Text></Text>
+      </Box>
+      <Box>
+        <Text>Height: <Text bold>{stdout.rows}</Text></Text>
+      </Box>
+      <Box marginTop={1}>
+        <Text dimColor>Is TTY: {stdout.isTTY ? 'yes' : 'no'}</Text>
+      </Box>
+    </Box>
+  );
+};
+```
+
+### Progress Updates
+
+Write progress updates above the UI:
+
+```jsx
+import {useEffect, useState} from 'react';
+import {useStdout, Box, Text} from 'ink';
+
+const FileProcessor = ({files}) => {
+  const {write} = useStdout();
+  const [processed, setProcessed] = useState(0);
+
+  useEffect(() => {
+    async function processFiles() {
+      for (const file of files) {
+        await processFile(file);
+        write(`Processed: ${file}\n`);
+        setProcessed(p => p + 1);
+      }
+    }
+    processFiles();
+  }, [files, write]);
+
+  return (
+    <Box>
+      <Text>
+        Progress: {processed}/{files.length} files
+      </Text>
+    </Box>
+  );
+};
+```
+
+### Write Command Output
+
+Capture and write external command output:
+
+```jsx
+import {useEffect, useState} from 'react';
+import {useStdout, Text} from 'ink';
+import {exec} from 'child_process';
+
+const CommandRunner = ({command}) => {
+  const {write} = useStdout();
+  const [status, setStatus] = useState('running');
+
+  useEffect(() => {
+    exec(command, (error, stdout, stderr) => {
+      if (stdout) write(stdout);
+      if (stderr) write(stderr);
+      setStatus(error ? 'error' : 'done');
+    });
+  }, [command, write]);
+
+  return (
+    <Text>
+      Status: {status}
+    </Text>
+  );
+};
+```
+
+### Debug Logging
+
+Log debug information without disrupting the UI:
+
+```jsx
+import {useStdout, useInput, Text} from 'ink';
+
+const App = () => {
+  const {write} = useStdout();
+
+  useInput((input, key) => {
+    // Log debug info above UI
+    write(`[DEBUG] Input: "${input}", Keys: ${JSON.stringify(key)}\n`);
+  });
+
+  return <Text>Type to see debug output above</Text>;
+};
+```
+
+### External Data Stream
+
+Write streaming data as it arrives:
+
+```jsx
+import {useEffect} from 'react';
+import {useStdout, Text} from 'ink';
+import {EventEmitter} from 'events';
+
+const StreamViewer = ({dataStream}) => {
+  const {write} = useStdout();
+
+  useEffect(() => {
+    const handleData = (chunk) => {
+      write(chunk.toString());
+    };
+
+    dataStream.on('data', handleData);
+
+    return () => {
+      dataStream.off('data', handleData);
+    };
+  }, [dataStream, write]);
+
+  return <Text>Streaming data (see above)...</Text>;
+};
+```
+
+### Color-Coded Messages
+
+Write colored messages using chalk:
+
+```jsx
+import {useEffect} from 'react';
+import {useStdout, Text} from 'ink';
+import chalk from 'chalk';
+
+const ColorLogger = () => {
+  const {write} = useStdout();
+
+  useEffect(() => {
+    write(chalk.green('\u2713 Success message\n'));
+    write(chalk.yellow('\u26a0 Warning message\n'));
+    write(chalk.red('\u2717 Error message\n'));
+  }, [write]);
+
+  return <Text>Messages written above</Text>;
+};
+```
+
+## Write vs Rendering
+
+Understand when to use each approach:
+
+### Use `write()` when:
+- Writing output that should appear **above** Ink's output
+- Logging messages that shouldn't be part of the UI state
+- Outputting data from external processes
+- Writing one-time messages that don't need to update
+
+### Use Ink rendering when:
+- Building interactive UI components
+- Displaying state that updates over time
+- Creating layouts with flexbox
+- Using React patterns (state, effects, etc.)
+
+## Notes
+
+<Note>
+  Content written with `write()` appears **above** Ink's rendered output and is not cleared when Ink re-renders. It's similar to the `<Static>` component but for plain strings only.
+</Note>
+
+<Note>
+  Always end your written strings with a newline (`\n`) to ensure proper formatting. Without it, text may appear on the same line as Ink's output.
+</Note>
+
+<Note>
+  The `stdout` stream is the same stream you can pass to `render()` via options. If you don't pass a custom stream, it defaults to `process.stdout`.
+</Note>
+
+<Warning>
+  Writing large amounts of data with `write()` can affect terminal performance. For large datasets, consider writing to a file instead.
+</Warning>
+
+## Related Hooks
+
+- [useStderr](/hooks/use-stderr) - Write to stderr for error messages
+- [useWindowSize](/hooks/use-window-size) - Get terminal dimensions that update on resize
+- [useApp](/hooks/use-app) - Wait for render flush before writing

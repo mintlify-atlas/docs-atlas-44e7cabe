@@ -1,0 +1,44 @@
+---
+title: useStdout
+description: Hook for accessing stdout stream
+---
+
+A React hook that returns the stdout stream where Ink renders your app.
+
+## Signature
+
+```typescript
+const useStdout = () => {
+  stdout: NodeJS.WriteStream;
+  write: (data: string) => void;
+}
+```
+
+## Parameters
+
+This hook takes no parameters.
+
+## Return Value
+
+<ResponseField name="stdout" type="NodeJS.WriteStream">
+  Stdout stream passed to `render()` in `options.stdout` or `process.stdout` by default.
+</ResponseField>
+
+<ResponseField name="write" type="(data: string) => void">
+  Write any string to stdout while preserving Ink's output. It's useful when you want to display external information outside of Ink's rendering and ensure there's no conflict between the two. It's similar to `<Static>`, except it can't accept components; it only works with strings.
+</ResponseField>
+
+## Example
+
+```tsx
+import {useStdout} from 'ink';
+
+const Example = () => {
+  const {stdout, write} = useStdout();
+
+  // Write to stdout without interfering with Ink's output
+  write('External message\n');
+
+  return …
+};
+```

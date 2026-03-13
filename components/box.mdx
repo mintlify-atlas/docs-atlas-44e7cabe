@@ -1,0 +1,710 @@
+---
+title: Box
+description: Flexbox container component for building layouts in the terminal
+icon: square
+---
+
+The `<Box>` component is the essential building block for layouts in Ink. It works like `<div style="display: flex">` in the browser, using Flexbox properties powered by [Yoga](https://github.com/facebook/yoga).
+
+<Note>
+  Every element in Ink is a Flexbox container by default. If you're familiar with CSS Flexbox, you already understand Ink layouts.
+</Note>
+
+## Basic Usage
+
+```jsx
+import {render, Box, Text} from 'ink';
+
+const App = () => (
+  <Box flexDirection="column" padding={2}>
+    <Text>Hello World</Text>
+  </Box>
+);
+
+render(<App />);
+```
+
+## Dimensions
+
+### width
+
+<ParamField path="width" type="number | string">
+  Width of the element in spaces. Can be a number or percentage string (e.g., `"50%"`).
+</ParamField>
+
+```jsx
+<Box width={10}>
+  <Text>X</Text>
+</Box>
+// Output: 'X         '
+
+<Box width={10}>
+  <Box width="50%">
+    <Text>X</Text>
+  </Box>
+  <Text>Y</Text>
+</Box>
+// Output: 'X    Y'
+```
+
+### height
+
+<ParamField path="height" type="number | string">
+  Height of the element in lines (rows). Can be a number or percentage string.
+</ParamField>
+
+```jsx
+<Box height={4}>
+  <Text>X</Text>
+</Box>
+// Output: 'X\n\n\n'
+
+<Box height={6} flexDirection="column">
+  <Box height="50%">
+    <Text>X</Text>
+  </Box>
+  <Text>Y</Text>
+</Box>
+// Output: 'X\n\n\nY\n\n'
+```
+
+### minWidth / minHeight
+
+<ParamField path="minWidth" type="number">
+  Sets minimum width of the element. Percentages not yet supported.
+</ParamField>
+
+<ParamField path="minHeight" type="number | string">
+  Sets minimum height. Supports percentages.
+</ParamField>
+
+### maxWidth / maxHeight
+
+<ParamField path="maxWidth" type="number">
+  Sets maximum width of the element. Percentages not yet supported.
+</ParamField>
+
+<ParamField path="maxHeight" type="number | string">
+  Sets maximum height. Supports percentages.
+</ParamField>
+
+### aspectRatio
+
+<ParamField path="aspectRatio" type="number">
+  Defines the aspect ratio (width/height). Use with at least one size constraint.
+</ParamField>
+
+## Padding
+
+### padding
+
+<ParamField path="padding" type="number" default="0">
+  Padding on all sides. Shorthand for paddingTop, paddingBottom, paddingLeft, and paddingRight.
+</ParamField>
+
+```jsx
+<Box padding={2}>
+  <Text>Padded on all sides</Text>
+</Box>
+```
+
+### paddingX / paddingY
+
+<ParamField path="paddingX" type="number" default="0">
+  Horizontal padding. Sets both paddingLeft and paddingRight.
+</ParamField>
+
+<ParamField path="paddingY" type="number" default="0">
+  Vertical padding. Sets both paddingTop and paddingBottom.
+</ParamField>
+
+```jsx
+<Box paddingX={2} paddingY={1}>
+  <Text>Content</Text>
+</Box>
+```
+
+### Individual Sides
+
+<ParamField path="paddingTop" type="number" default="0">
+  Top padding.
+</ParamField>
+
+<ParamField path="paddingBottom" type="number" default="0">
+  Bottom padding.
+</ParamField>
+
+<ParamField path="paddingLeft" type="number" default="0">
+  Left padding.
+</ParamField>
+
+<ParamField path="paddingRight" type="number" default="0">
+  Right padding.
+</ParamField>
+
+## Margin
+
+Margin props work identically to padding:
+
+<ParamField path="margin" type="number" default="0">
+  Margin on all sides.
+</ParamField>
+
+<ParamField path="marginX" type="number" default="0">
+  Horizontal margin (left and right).
+</ParamField>
+
+<ParamField path="marginY" type="number" default="0">
+  Vertical margin (top and bottom).
+</ParamField>
+
+<ParamField path="marginTop" type="number" default="0" />
+<ParamField path="marginBottom" type="number" default="0" />
+<ParamField path="marginLeft" type="number" default="0" />
+<ParamField path="marginRight" type="number" default="0" />
+
+```jsx
+<Box marginTop={2}>
+  <Text>Top margin</Text>
+</Box>
+<Box marginX={2}>
+  <Text>Horizontal margins</Text>
+</Box>
+```
+
+## Gap
+
+### gap
+
+<ParamField path="gap" type="number" default="0">
+  Size of the gap between an element's columns and rows. Shorthand for columnGap and rowGap.
+</ParamField>
+
+```jsx
+<Box gap={1} width={3} flexWrap="wrap">
+  <Text>A</Text>
+  <Text>B</Text>
+  <Text>C</Text>
+</Box>
+// A B
+//
+// C
+```
+
+### columnGap
+
+<ParamField path="columnGap" type="number" default="0">
+  Size of the gap between an element's columns.
+</ParamField>
+
+```jsx
+<Box columnGap={1}>
+  <Text>A</Text>
+  <Text>B</Text>
+</Box>
+// A B
+```
+
+### rowGap
+
+<ParamField path="rowGap" type="number" default="0">
+  Size of the gap between an element's rows.
+</ParamField>
+
+```jsx
+<Box flexDirection="column" rowGap={1}>
+  <Text>A</Text>
+  <Text>B</Text>
+</Box>
+// A
+//
+// B
+```
+
+## Flexbox
+
+### flexDirection
+
+<ParamField path="flexDirection" type="string">
+  Main axis direction.
+  
+  **Options:** `row` | `row-reverse` | `column` | `column-reverse`
+</ParamField>
+
+```jsx
+<Box flexDirection="column">
+  <Text>X</Text>
+  <Text>Y</Text>
+</Box>
+// X
+// Y
+
+<Box flexDirection="row">
+  <Text>X</Text>
+  <Text>Y</Text>
+</Box>
+// X Y
+```
+
+### flexGrow
+
+<ParamField path="flexGrow" type="number" default="0">
+  How much the element should grow to fill available space.
+</ParamField>
+
+```jsx
+<Box>
+  <Text>Label:</Text>
+  <Box flexGrow={1}>
+    <Text>Fills remaining space</Text>
+  </Box>
+</Box>
+```
+
+### flexShrink
+
+<ParamField path="flexShrink" type="number" default="1">
+  How much the element should shrink if needed.
+</ParamField>
+
+```jsx
+<Box width={20}>
+  <Box flexShrink={2} width={10}>
+    <Text>Will be 1/4</Text>
+  </Box>
+  <Box width={10}>
+    <Text>Will be 3/4</Text>
+  </Box>
+</Box>
+```
+
+### flexBasis
+
+<ParamField path="flexBasis" type="number | string">
+  Initial size of the element. Can be a number or percentage.
+</ParamField>
+
+```jsx
+<Box width={6}>
+  <Box flexBasis="50%">
+    <Text>X</Text>
+  </Box>
+  <Text>Y</Text>
+</Box>
+// X  Y
+```
+
+### flexWrap
+
+<ParamField path="flexWrap" type="string">
+  Whether items should wrap to new lines.
+  
+  **Options:** `nowrap` | `wrap` | `wrap-reverse`
+</ParamField>
+
+```jsx
+<Box width={2} flexWrap="wrap">
+  <Text>A</Text>
+  <Text>BC</Text>
+</Box>
+// A
+// B C
+```
+
+### justifyContent
+
+<ParamField path="justifyContent" type="string">
+  Alignment along the main axis.
+  
+  **Options:** `flex-start` | `center` | `flex-end` | `space-between` | `space-around` | `space-evenly`
+</ParamField>
+
+```jsx
+<Box justifyContent="center">
+  <Text>Centered</Text>
+</Box>
+
+<Box justifyContent="space-between">
+  <Text>Left</Text>
+  <Text>Right</Text>
+</Box>
+```
+
+### alignItems
+
+<ParamField path="alignItems" type="string">
+  Alignment along the cross axis.
+  
+  **Options:** `flex-start` | `center` | `flex-end` | `stretch` | `baseline`
+</ParamField>
+
+```jsx
+<Box alignItems="center">
+  <Text>Vertically centered</Text>
+</Box>
+```
+
+### alignSelf
+
+<ParamField path="alignSelf" type="string" default="auto">
+  Override alignItems for this specific element.
+  
+  **Options:** `auto` | `flex-start` | `center` | `flex-end` | `stretch` | `baseline`
+</ParamField>
+
+```jsx
+<Box height={3}>
+  <Box alignSelf="center">
+    <Text>Centered</Text>
+  </Box>
+</Box>
+```
+
+### alignContent
+
+<ParamField path="alignContent" type="string" default="flex-start">
+  Alignment between flex lines when flexWrap creates multiple lines.
+  
+  **Options:** `flex-start` | `flex-end` | `center` | `stretch` | `space-between` | `space-around` | `space-evenly`
+</ParamField>
+
+## Position
+
+### position
+
+<ParamField path="position" type="string" default="relative">
+  How the element is positioned.
+  
+  **Options:** `relative` | `absolute` | `static`
+</ParamField>
+
+### top / right / bottom / left
+
+<ParamField path="top" type="number | string">
+  Top offset for positioned elements. Supports percentages.
+</ParamField>
+
+<ParamField path="right" type="number | string">
+  Right offset for positioned elements. Supports percentages.
+</ParamField>
+
+<ParamField path="bottom" type="number | string">
+  Bottom offset for positioned elements. Supports percentages.
+</ParamField>
+
+<ParamField path="left" type="number | string">
+  Left offset for positioned elements. Supports percentages.
+</ParamField>
+
+## Visibility
+
+### display
+
+<ParamField path="display" type="string" default="flex">
+  Display mode. Set to `none` to hide the element.
+  
+  **Options:** `flex` | `none`
+</ParamField>
+
+```jsx
+<Box display={showContent ? 'flex' : 'none'}>
+  <Text>Conditional content</Text>
+</Box>
+```
+
+### overflow / overflowX / overflowY
+
+<ParamField path="overflow" type="string" default="visible">
+  Behavior for overflow in both directions.
+  
+  **Options:** `visible` | `hidden`
+</ParamField>
+
+<ParamField path="overflowX" type="string" default="visible">
+  Horizontal overflow behavior.
+</ParamField>
+
+<ParamField path="overflowY" type="string" default="visible">
+  Vertical overflow behavior.
+</ParamField>
+
+## Borders
+
+### borderStyle
+
+<ParamField path="borderStyle" type="string | object">
+  Add a border with specified style.
+  
+  **Options:** `single` | `double` | `round` | `bold` | `singleDouble` | `doubleSingle` | `classic` | custom object
+</ParamField>
+
+```jsx
+<Box borderStyle="round">
+  <Text>Rounded border</Text>
+</Box>
+
+<Box borderStyle="double">
+  <Text>Double border</Text>
+</Box>
+
+{/* Custom border */}
+<Box borderStyle={{
+  topLeft: '↘',
+  top: '↓',
+  topRight: '↙',
+  left: '→',
+  bottomLeft: '↗',
+  bottom: '↑',
+  bottomRight: '↖',
+  right: '←'
+}}>
+  <Text>Custom arrows</Text>
+</Box>
+```
+
+### Border Examples
+
+From the official Ink examples:
+
+```jsx
+import {Box, Text} from 'ink';
+
+const Borders = () => (
+  <Box flexDirection="column" padding={2}>
+    <Box>
+      <Box borderStyle="single" marginRight={2}>
+        <Text>single</Text>
+      </Box>
+      <Box borderStyle="double" marginRight={2}>
+        <Text>double</Text>
+      </Box>
+      <Box borderStyle="round" marginRight={2}>
+        <Text>round</Text>
+      </Box>
+      <Box borderStyle="bold">
+        <Text>bold</Text>
+      </Box>
+    </Box>
+  </Box>
+);
+```
+
+### borderColor
+
+<ParamField path="borderColor" type="string">
+  Border color for all sides. Accepts color names, hex, and RGB values.
+</ParamField>
+
+```jsx
+<Box borderStyle="round" borderColor="green">
+  <Text>Green border</Text>
+</Box>
+```
+
+### Individual Border Colors
+
+<ParamField path="borderTopColor" type="string">
+  Top border color.
+</ParamField>
+
+<ParamField path="borderRightColor" type="string">
+  Right border color.
+</ParamField>
+
+<ParamField path="borderBottomColor" type="string">
+  Bottom border color.
+</ParamField>
+
+<ParamField path="borderLeftColor" type="string">
+  Left border color.
+</ParamField>
+
+### Border Dim
+
+<ParamField path="borderDimColor" type="boolean" default="false">
+  Dim all border colors.
+</ParamField>
+
+<ParamField path="borderTopDimColor" type="boolean" default="false" />
+<ParamField path="borderRightDimColor" type="boolean" default="false" />
+<ParamField path="borderBottomDimColor" type="boolean" default="false" />
+<ParamField path="borderLeftDimColor" type="boolean" default="false" />
+
+### Border Visibility
+
+<ParamField path="borderTop" type="boolean" default="true">
+  Show top border.
+</ParamField>
+
+<ParamField path="borderRight" type="boolean" default="true">
+  Show right border.
+</ParamField>
+
+<ParamField path="borderBottom" type="boolean" default="true">
+  Show bottom border.
+</ParamField>
+
+<ParamField path="borderLeft" type="boolean" default="true">
+  Show left border.
+</ParamField>
+
+## Background
+
+### backgroundColor
+
+<ParamField path="backgroundColor" type="string">
+  Background color for the entire box area. Accepts color names, hex values, and RGB.
+</ParamField>
+
+```jsx
+<Box backgroundColor="blue" padding={1}>
+  <Text>Blue background</Text>
+</Box>
+
+<Box backgroundColor="#FF8800" width={20} height={3}>
+  <Text>Hex orange</Text>
+</Box>
+
+<Box backgroundColor="rgb(0, 255, 0)" borderStyle="round">
+  <Text>RGB green with border</Text>
+</Box>
+```
+
+### Background Inheritance
+
+Child `<Text>` components inherit the background color:
+
+```jsx
+<Box backgroundColor="cyan">
+  <Text>Inherits cyan</Text>
+  <Text backgroundColor="yellow">Overrides to yellow</Text>
+</Box>
+```
+
+### Background Examples
+
+From the official Ink examples:
+
+```jsx
+import {Box, Text} from 'ink';
+
+const BoxBackgrounds = () => (
+  <Box flexDirection="column" gap={1}>
+    <Box backgroundColor="red" width={20} height={3}>
+      <Text>Red background</Text>
+    </Box>
+    
+    <Box backgroundColor="blue" borderStyle="round" padding={1}>
+      <Text>Blue with border and padding</Text>
+    </Box>
+    
+    <Box backgroundColor="cyan">
+      <Text>Inherited </Text>
+      <Text backgroundColor="yellow">Override </Text>
+      <Text>Back to inherited</Text>
+    </Box>
+  </Box>
+);
+```
+
+## Accessibility Props
+
+### aria-label
+
+<ParamField path="aria-label" type="string">
+  A label for screen readers. Replaces children when screen reader is enabled.
+</ParamField>
+
+### aria-hidden
+
+<ParamField path="aria-hidden" type="boolean" default="false">
+  Hide element from screen readers.
+</ParamField>
+
+### aria-role
+
+<ParamField path="aria-role" type="string">
+  The role of the element for screen readers.
+  
+  **Options:** `button` | `checkbox` | `combobox` | `list` | `listbox` | `listitem` | `menu` | `menuitem` | `option` | `progressbar` | `radio` | `radiogroup` | `tab` | `tablist` | `table` | `textbox` | `timer` | `toolbar`
+</ParamField>
+
+### aria-state
+
+<ParamField path="aria-state" type="object">
+  State information for screen readers.
+  
+  **Properties:** `busy`, `checked`, `disabled`, `expanded`, `multiline`, `multiselectable`, `readonly`, `required`, `selected`
+</ParamField>
+
+```jsx
+<Box aria-role="checkbox" aria-state={{checked: isChecked}}>
+  <Text>{isChecked ? '☑' : '☐'} Accept terms</Text>
+</Box>
+```
+
+## Common Patterns
+
+### Centering Content
+
+```jsx
+<Box justifyContent="center" alignItems="center" height={10}>
+  <Text>Centered both ways</Text>
+</Box>
+```
+
+### Header with Spacer
+
+```jsx
+import {Box, Text, Spacer} from 'ink';
+
+const Header = () => (
+  <Box>
+    <Text bold>My App</Text>
+    <Spacer />
+    <Text dimColor>v1.0.0</Text>
+  </Box>
+);
+```
+
+### Card Component
+
+```jsx
+const Card = ({title, children}) => (
+  <Box borderStyle="round" borderColor="blue" padding={1} flexDirection="column">
+    <Text bold color="blue">{title}</Text>
+    <Box marginTop={1}>
+      {children}
+    </Box>
+  </Box>
+);
+```
+
+### Split Layout
+
+```jsx
+<Box width="100%" height={20}>
+  <Box width="50%" borderStyle="single" borderRight={false}>
+    <Text>Left panel</Text>
+  </Box>
+  <Box width="50%" borderStyle="single">
+    <Text>Right panel</Text>
+  </Box>
+</Box>
+```
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Text" href="/components/text">
+    Display styled text content
+  </Card>
+  
+  <Card title="Spacer" href="/components/spacer">
+    Fill available space between elements
+  </Card>
+  
+  <Card title="Flexbox Layouts" href="/concepts/flexbox-layouts">
+    Learn more about Flexbox in Ink
+  </Card>
+</CardGroup>

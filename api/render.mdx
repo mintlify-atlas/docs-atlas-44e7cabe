@@ -1,0 +1,238 @@
+---
+title: render()
+description: Mount a component and render the output to the terminal
+---
+
+## Function Signature
+
+```typescript
+function render(
+  node: ReactNode,
+  options?: RenderOptions
+): Instance
+```
+
+## Description
+
+Mount a component and render the output to the terminal. This is the main entry point for creating an Ink application.
+
+## Parameters
+
+<ParamField path="node" type="ReactNode" required>
+  The React component tree to render
+</ParamField>
+
+<ParamField path="options" type="RenderOptions">
+  Configuration options for the renderer
+
+  <Expandable title="options properties">
+    <ParamField path="stdout" type="NodeJS.WriteStream" default="process.stdout">
+      Output stream where the app will be rendered
+    </ParamField>
+
+    <ParamField path="stdin" type="NodeJS.ReadStream" default="process.stdin">
+      Input stream where app will listen for input
+    </ParamField>
+
+    <ParamField path="stderr" type="NodeJS.WriteStream" default="process.stderr">
+      Error stream
+    </ParamField>
+
+    <ParamField path="debug" type="boolean" default={false}>
+      If true, each update will be rendered as separate output, without replacing the previous one
+    </ParamField>
+
+    <ParamField path="exitOnCtrlC" type="boolean" default={true}>
+      Configure whether Ink should listen for Ctrl+C keyboard input and exit the app. This is needed in case `process.stdin` is in raw mode, because then Ctrl+C is ignored by default and the process is expected to handle it manually
+    </ParamField>
+
+    <ParamField path="patchConsole" type="boolean" default={true}>
+      Patch console methods to ensure console output doesn't mix with Ink's output.
+      
+      Once unmount starts, Ink restores the native console before React cleanup runs. Teardown-time `console.*` output then follows the normal console behavior instead of being rerouted through Ink
+    </ParamField>
+
+    <ParamField path="onRender" type="(metrics: RenderMetrics) => void">
+      Runs the given callback after each render and re-render with render metrics.
+      
+      Note: this callback runs after Ink commits a frame, but it does not wait for `stdout`/`stderr` stream callbacks. To run code after output is flushed, use `waitUntilRenderFlush()`
+    </ParamField>
+
+    <ParamField path="isScreenReaderEnabled" type="boolean" default="process.env['INK_SCREEN_READER'] === 'true'">
+      Enable screen reader support. See the [Screen Reader Support](https://github.com/vadimdemedes/ink#screen-reader-support) documentation
+    </ParamField>
+
+    <ParamField path="maxFps" type="number" default={30}>
+      Maximum frames per second for render updates. This controls how frequently the UI can update to prevent excessive re-rendering. Higher values allow more frequent updates but may impact performance
+    </ParamField>
+
+    <ParamField path="incrementalRendering" type="boolean" default={false}>
+      Enable incremental rendering mode which only updates changed lines instead of redrawing the entire output. This can reduce flickering and improve performance for frequently updating UIs
+    </ParamField>
+
+    <ParamField path="concurrent" type="boolean" default={false}>
+      Enable React Concurrent Rendering mode.
+      
+      When enabled:
+      - Suspense boundaries work correctly with async data
+      - `useTransition` and `useDeferredValue` are fully functional
+      - Updates can be interrupted for higher priority work
+      
+      Note: Concurrent mode changes the timing of renders. Some tests may need to use `act()` to properly await updates. Reusing the same stdout across multiple `render()` calls without unmounting is unsupported. Call `unmount()` first if you need to change the rendering mode or create a fresh instance
+    </ParamField>
+
+    <ParamField path="kittyKeyboard" type="KittyKeyboardOptions">
+      Configure kitty keyboard protocol support for enhanced keyboard input. Enables additional modifiers (super, hyper, capsLock, numLock) and disambiguated key events in terminals that support the protocol.
+      
+      See [kitty keyboard protocol documentation](https://sw.kovidgoyal.net/kitty/keyboard-protocol/)
+    </ParamField>
+
+    <ParamField path="interactive" type="boolean" default="true (false if in CI or stdout.isTTY is falsy)">
+      Override automatic interactive mode detection.
+      
+      By default, Ink detects whether the environment is interactive based on CI detection (via `is-in-ci`) and `stdout.isTTY`. Most users should not need to set this.
+      
+      When non-interactive, Ink disables ANSI erase sequences, cursor manipulation, synchronized output, resize handling, and kitty keyboard auto-detection, writing only the final frame at unmount.
+      
+      Note: Reusing the same stdout across multiple `render()` calls without unmounting is unsupported. Call `unmount()` first if you need to change this option or create a fresh instance
+    </ParamField>
+
+    <ParamField path="alternateScreen" type="boolean" default={false}>
+      Render the app in the terminal's alternate screen buffer. When enabled, the app renders on a separate screen, and the original terminal content is restored when the app exits. This is the same mechanism used by programs like vim, htop, and less.
+      
+      Note: The terminal's scrollback buffer is not available while in the alternate screen. This is standard terminal behavior; programs like vim use the alternate screen specifically to avoid polluting the user's scrollback history.
+      
+      Only works in interactive mode. Ignored when `interactive` is `false` or in a non-interactive environment (CI, piped stdout).
+      
+      Note: Reusing the same stdout across multiple `render()` calls without unmounting is unsupported. Call `unmount()` first if you need to change this option or create a fresh instance
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Return Value
+
+<ResponseField name="Instance" type="object">
+  An object containing methods to control the rendered application
+
+  <Expandable title="Instance properties">
+    <ResponseField name="rerender" type="(node: ReactNode) => void">
+      Replace the previous root node with a new one or update props of the current root node
+    </ResponseField>
+
+    <ResponseField name="unmount" type="() => void">
+      Manually unmount the whole Ink app
+    </ResponseField>
+
+    <ResponseField name="waitUntilExit" type="() => Promise<unknown>">
+      Returns a promise that settles when the app is unmounted.
+      
+      It resolves with the value passed to `exit(value)` and rejects with the error passed to `exit(error)`. When `unmount()` is called manually, it settles after unmount-related stdout writes complete
+    </ResponseField>
+
+    <ResponseField name="waitUntilRenderFlush" type="() => Promise<void>">
+      Returns a promise that settles after pending render output is flushed to stdout.
+      
+      This can be used after `rerender()` when you need to run code only after the frame is written
+    </ResponseField>
+
+    <ResponseField name="cleanup" type="() => void">
+      Unmount the current app and remove the internal Ink instance for this stdout.
+      
+      This is mostly useful for advanced cases where you need `render()` to create a fresh instance for the same stream without leaving terminal state such as the alternate screen behind
+    </ResponseField>
+
+    <ResponseField name="clear" type="() => void">
+      Clear output
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Examples
+
+### Basic Usage
+
+```jsx
+import {render, Text} from 'ink';
+
+const App = () => <Text color="green">Hello World</Text>;
+
+render(<App />);
+```
+
+### With Options
+
+```jsx
+import {render, Text} from 'ink';
+
+const App = () => <Text>My App</Text>;
+
+const instance = render(<App />, {
+  stdout: process.stdout,
+  stdin: process.stdin,
+  exitOnCtrlC: true,
+  patchConsole: true,
+  maxFps: 30
+});
+```
+
+### Using Instance Methods
+
+```jsx
+import {render, Text} from 'ink';
+
+const App = ({count}) => <Text>Count: {count}</Text>;
+
+const {rerender, unmount, waitUntilExit} = render(<App count={0} />);
+
+// Update props
+rerender(<App count={1} />);
+
+// Programmatic unmount after delay
+setTimeout(unmount, 1000);
+
+// Wait for exit
+await waitUntilExit();
+console.log('App exited');
+```
+
+### Concurrent Mode
+
+```jsx
+import {render, Text} from 'ink';
+
+const App = () => {
+  return (
+    <React.Suspense fallback={<Text>Loading...</Text>}>
+      <AsyncComponent />
+    </React.Suspense>
+  );
+};
+
+render(<App />, {
+  concurrent: true
+});
+```
+
+### Alternate Screen
+
+```jsx
+import {render, Text, Box} from 'ink';
+
+const FullScreenApp = () => (
+  <Box flexDirection="column" padding={1}>
+    <Text>This runs in alternate screen</Text>
+    <Text dimColor>Press Ctrl+C to exit</Text>
+  </Box>
+);
+
+render(<FullScreenApp />, {
+  alternateScreen: true
+});
+```
+
+## Notes
+
+- An Ink app is a Node.js process, so it stays alive only while there is active work in the event loop (timers, pending promises, `useInput` listening on stdin, etc.)
+- To exit the app, press Ctrl+C (enabled by default via `exitOnCtrlC`), call `exit()` from `useApp` inside a component, or call `unmount()` on the returned instance
+- If your component tree has no async work, the app will render once and exit immediately
+- Reusing the same stdout across multiple `render()` calls without unmounting is unsupported

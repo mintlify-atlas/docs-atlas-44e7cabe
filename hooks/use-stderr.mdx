@@ -1,0 +1,319 @@
+---
+title: 'useStderr'
+description: 'Access the stderr stream for error output'
+---
+
+`useStderr` is a React hook that provides access to the stderr stream and utilities for writing error messages and diagnostics separate from your main output.
+
+## Import
+
+```jsx
+import {useStderr} from 'ink';
+```
+
+## Signature
+
+```typescript
+useStderr(): {
+  stderr: stream.Writable;
+  write: (data: string) => void;
+}
+```
+
+## Return Value
+
+<ResponseField name="stderr" type="stream.Writable">
+  The stderr stream passed to `render()` in options, or `process.stderr` by default.
+</ResponseField>
+
+<ResponseField name="write" type="function">
+  Write any string to stderr while preserving Ink's output. Useful for error messages, warnings, and diagnostic information that should be separate from standard output.
+  
+  <Expandable title="Parameters">
+    <ParamField path="data" type="string">
+      The data to write to stderr. Should typically end with a newline (`\n`).
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+## Examples
+
+### Basic Error Logging
+
+Write error messages to stderr:
+
+```jsx
+import {useEffect} from 'react';
+import {useStderr, Text} from 'ink';
+
+const App = () => {
+  const {write} = useStderr();
+
+  useEffect(() => {
+    write('Error: Something went wrong\n');
+  }, [write]);
+
+  return <Text>Check stderr for error message</Text>;
+};
+```
+
+### Error Handler
+
+Catch and log errors to stderr:
+
+```jsx
+import {useEffect, useState} from 'react';
+import {useStderr, Box, Text} from 'ink';
+
+const DataFetcher = ({url}) => {
+  const {write} = useStderr();
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch(url)
+      .then(res => res.json())
+      .then(setData)
+      .catch(err => {
+        write(`Error fetching ${url}: ${err.message}\n`);
+        setError(err.message);
+      });
+  }, [url, write]);
+
+  if (error) {
+    return <Text color="red">Error: {error}</Text>;
+  }
+
+  if (!data) {
+    return <Text>Loading...</Text>;
+  }
+
+  return <Text>Data loaded successfully</Text>;
+};
+```
+
+### Warning Logger
+
+Log warnings to stderr:
+
+```jsx
+import {useEffect} from 'react';
+import {useStderr, Text} from 'ink';
+import chalk from 'chalk';
+
+const ConfigValidator = ({config}) => {
+  const {write} = useStderr();
+
+  useEffect(() => {
+    const warnings = validateConfig(config);
+    
+    if (warnings.length > 0) {
+      write(chalk.yellow('\n\u26a0 Configuration Warnings:\n'));
+      warnings.forEach(warning => {
+        write(chalk.yellow(`  - ${warning}\n`));
+      });
+      write('\n');
+    }
+  }, [config, write]);
+
+  return <Text>Validating configuration...</Text>;
+};
+```
+
+### Debug Output
+
+Write debug information to stderr:
+
+```jsx
+import {useStderr, useInput, Text} from 'ink';
+
+const App = () => {
+  const {write} = useStderr();
+  const DEBUG = process.env.DEBUG === 'true';
+
+  useInput((input, key) => {
+    if (DEBUG) {
+      write(`[DEBUG] Input: ${JSON.stringify({input, key})}\n`);
+    }
+  });
+
+  return <Text>Type to generate debug output</Text>;
+};
+```
+
+### Deprecation Warnings
+
+Warn about deprecated features:
+
+```jsx
+import {useEffect} from 'react';
+import {useStderr, Text} from 'ink';
+import chalk from 'chalk';
+
+const LegacyComponent = ({oldProp, newProp}) => {
+  const {write} = useStderr();
+
+  useEffect(() => {
+    if (oldProp !== undefined) {
+      write(
+        chalk.yellow(
+          'Warning: "oldProp" is deprecated. Use "newProp" instead.\n'
+        )
+      );
+    }
+  }, [oldProp, write]);
+
+  return <Text>Component content</Text>;
+};
+```
+
+### Error Stack Traces
+
+Log detailed error information:
+
+```jsx
+import {useEffect} from 'react';
+import {useStderr, Text, Box} from 'ink';
+
+const ErrorBoundary = ({error}) => {
+  const {write} = useStderr();
+
+  useEffect(() => {
+    if (error) {
+      write('\n--- Error Details ---\n');
+      write(`Message: ${error.message}\n`);
+      write(`Stack:\n${error.stack}\n`);
+      write('-------------------\n\n');
+    }
+  }, [error, write]);
+
+  return (
+    <Box flexDirection="column">
+      <Text color="red" bold>An error occurred</Text>
+      <Text>{error?.message}</Text>
+      <Text dimColor>See stderr for full stack trace</Text>
+    </Box>
+  );
+};
+```
+
+### Validation Errors
+
+Report validation errors separately:
+
+```jsx
+import {useEffect, useState} from 'react';
+import {useStderr, Box, Text} from 'ink';
+
+const FormValidator = ({data}) => {
+  const {write} = useStderr();
+  const [errors, setErrors] = useState([]);
+
+  useEffect(() => {
+    const validationErrors = validate(data);
+    setErrors(validationErrors);
+
+    if (validationErrors.length > 0) {
+      write('\nValidation errors:\n');
+      validationErrors.forEach(err => {
+        write(`  - ${err.field}: ${err.message}\n`);
+      });
+    }
+  }, [data, write]);
+
+  return (
+    <Box flexDirection="column">
+      {errors.length > 0 ? (
+        <Text color="red">{errors.length} validation errors (see stderr)</Text>
+      ) : (
+        <Text color="green">All fields valid</Text>
+      )}
+    </Box>
+  );
+};
+```
+
+### Performance Warnings
+
+Log performance issues:
+
+```jsx
+import {useEffect} from 'react';
+import {useStderr, Text} from 'ink';
+
+const PerformanceMonitor = ({children}) => {
+  const {write} = useStderr();
+
+  useEffect(() => {
+    const start = Date.now();
+
+    return () => {
+      const duration = Date.now() - start;
+      if (duration > 5000) {
+        write(
+          `Performance warning: Component was mounted for ${duration}ms\n`
+        );
+      }
+    };
+  }, [write]);
+
+  return children;
+};
+```
+
+## Stderr vs Stdout
+
+### Use stderr for:
+- Error messages and exceptions
+- Warning messages
+- Debug output and diagnostics
+- Deprecation notices
+- Progress indicators (when stdout is piped)
+- Logging that shouldn't mix with program output
+
+### Use stdout for:
+- Primary program output
+- Results meant to be consumed by other programs
+- User-facing content and UI
+- Data that should be pipeable
+
+## Redirection Examples
+
+Users can redirect your output streams independently:
+
+```bash
+# Only stdout to file, errors to terminal
+my-cli > output.txt
+
+# Only stderr to file, output to terminal  
+my-cli 2> errors.txt
+
+# Both to separate files
+my-cli > output.txt 2> errors.txt
+
+# Stderr to stdout (combine streams)
+my-cli 2>&1
+```
+
+## Notes
+
+<Note>
+  Writing to stderr doesn't affect Ink's rendering. Your error messages appear separately from the UI.
+</Note>
+
+<Note>
+  Always end written strings with a newline (`\n`) for proper formatting.
+</Note>
+
+<Note>
+  The stderr stream is separate from stdout, allowing users to redirect errors and output independently.
+</Note>
+
+<Note>
+  The `stderr` stream is the same stream you can pass to `render()` via options. If you don't pass a custom stream, it defaults to `process.stderr`.
+</Note>
+
+## Related Hooks
+
+- [useStdout](/hooks/use-stdout) - Write to standard output
+- [useApp](/hooks/use-app) - Exit with error codes

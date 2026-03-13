@@ -1,0 +1,325 @@
+---
+title: 'useFocus'
+description: 'Make components focusable and check focus state'
+---
+
+`useFocus` is a React hook that makes a component "focusable" to Ink. When users press Tab, Ink switches focus between all components using this hook. The hook returns the current focus state and methods to programmatically control focus.
+
+## Import
+
+```jsx
+import {useFocus} from 'ink';
+```
+
+## Signature
+
+```typescript
+useFocus(options?: {
+  isActive?: boolean;
+  autoFocus?: boolean;
+  id?: string;
+}): {
+  isFocused: boolean;
+  focus: (id: string) => void;
+}
+```
+
+## Parameters
+
+<ParamField path="options" type="object">
+  <Expandable title="properties">
+    <ParamField path="isActive" type="boolean" default="true">
+      Enable or disable this component's focus, while still maintaining its position in the list of focusable components. Useful for temporarily disabled inputs.
+    </ParamField>
+    
+    <ParamField path="autoFocus" type="boolean" default="false">
+      Auto-focus this component if there's no active (focused) component right now.
+    </ParamField>
+    
+    <ParamField path="id" type="string">
+      Assign an ID to this component so it can be programmatically focused with `focus(id)`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Return Value
+
+<ResponseField name="isFocused" type="boolean">
+  Whether this component currently has focus.
+</ResponseField>
+
+<ResponseField name="focus" type="function">
+  Function to programmatically focus a component by its ID.
+  
+  <Expandable title="Parameters">
+    <ParamField path="id" type="string">
+      The ID of the component to focus (set via the `id` option).
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+## Examples
+
+### Basic Focus
+
+Indicate which item is focused:
+
+```jsx
+import {Box, Text, useFocus} from 'ink';
+
+const Item = ({label}) => {
+  const {isFocused} = useFocus();
+
+  return (
+    <Text>
+      {label} {isFocused && <Text color="green">(focused)</Text>}
+    </Text>
+  );
+};
+
+const App = () => (
+  <Box flexDirection="column" padding={1}>
+    <Text dimColor>Press Tab to focus next element</Text>
+    <Item label="First" />
+    <Item label="Second" />
+    <Item label="Third" />
+  </Box>
+);
+```
+
+### Interactive Input with Focus
+
+Only handle input when focused:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useInput, useFocus} from 'ink';
+
+const TextInput = ({label}) => {
+  const [value, setValue] = useState('');
+  const {isFocused} = useFocus();
+
+  useInput((input, key) => {
+    if (key.backspace) {
+      setValue(v => v.slice(0, -1));
+    } else if (input) {
+      setValue(v => v + input);
+    }
+  }, {isActive: isFocused});
+
+  return (
+    <Box>
+      <Text color={isFocused ? 'cyan' : 'white'}>
+        {label}: {value}
+      </Text>
+    </Box>
+  );
+};
+
+const Form = () => (
+  <Box flexDirection="column">
+    <Text dimColor>Press Tab to switch between inputs</Text>
+    <TextInput label="Name" />
+    <TextInput label="Email" />
+  </Box>
+);
+```
+
+### Auto Focus
+
+Automatically focus the first input:
+
+```jsx
+import {useFocus, Text} from 'ink';
+
+const Input = ({label, autoFocus}) => {
+  const {isFocused} = useFocus({autoFocus});
+
+  return (
+    <Text color={isFocused ? 'green' : 'white'}>
+      {label} {isFocused && '←'}
+    </Text>
+  );
+};
+
+const App = () => (
+  <>
+    <Input label="Focused first" autoFocus />
+    <Input label="Not focused" />
+  </>
+);
+```
+
+### Programmatic Focus with IDs
+
+Focus specific components by ID:
+
+```jsx
+import {Box, Text, useInput, useFocus} from 'ink';
+
+const Item = ({id, label}) => {
+  const {isFocused} = useFocus({id});
+
+  return (
+    <Text color={isFocused ? 'cyan' : 'white'}>
+      {id}: {label}
+    </Text>
+  );
+};
+
+const App = () => {
+  const {focus} = useFocus();
+
+  useInput((input) => {
+    // Press number keys to jump to that item
+    if (/[1-3]/.test(input)) {
+      focus(`item-${input}`);
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text dimColor>Press 1, 2, or 3 to focus that item</Text>
+      <Item id="item-1" label="First" />
+      <Item id="item-2" label="Second" />
+      <Item id="item-3" label="Third" />
+    </Box>
+  );
+};
+```
+
+### Conditional Focus (Disabled State)
+
+Disable focus for certain items:
+
+```jsx
+import {useFocus, Text} from 'ink';
+
+const MenuItem = ({label, disabled}) => {
+  const {isFocused} = useFocus({isActive: !disabled});
+
+  return (
+    <Text dimColor={disabled}>
+      {isFocused && '> '}
+      {label}
+      {disabled && ' (disabled)'}
+    </Text>
+  );
+};
+
+const Menu = () => (
+  <>
+    <MenuItem label="Available" />
+    <MenuItem label="Disabled" disabled />
+    <MenuItem label="Also available" />
+  </>
+);
+```
+
+### Focus Indicators
+
+Different styles for focused components:
+
+```jsx
+import {Box, Text, useFocus} from 'ink';
+
+const Card = ({title, description}) => {
+  const {isFocused} = useFocus();
+
+  return (
+    <Box
+      borderStyle="round"
+      borderColor={isFocused ? 'cyan' : 'gray'}
+      padding={1}
+      marginBottom={1}
+    >
+      <Box flexDirection="column">
+        <Text bold color={isFocused ? 'cyan' : 'white'}>
+          {title}
+        </Text>
+        <Text dimColor={!isFocused}>{description}</Text>
+      </Box>
+    </Box>
+  );
+};
+
+const App = () => (
+  <Box flexDirection="column">
+    <Card title="First Card" description="Press Tab to focus next" />
+    <Card title="Second Card" description="Use Shift+Tab for previous" />
+    <Card title="Third Card" description="Press Esc to clear focus" />
+  </Box>
+);
+```
+
+### List Navigation
+
+Build a selectable list:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useInput, useFocus} from 'ink';
+
+const ListItem = ({label, onSelect}) => {
+  const {isFocused} = useFocus();
+
+  useInput((input, key) => {
+    if (key.return && isFocused) {
+      onSelect(label);
+    }
+  });
+
+  return (
+    <Text color={isFocused ? 'cyan' : 'white'}>
+      {isFocused ? '❯ ' : '  '}{label}
+    </Text>
+  );
+};
+
+const List = () => {
+  const [selected, setSelected] = useState(null);
+
+  const items = ['Option 1', 'Option 2', 'Option 3'];
+
+  return (
+    <Box flexDirection="column">
+      <Text>Select an option:</Text>
+      {items.map(item => (
+        <ListItem key={item} label={item} onSelect={setSelected} />
+      ))}
+      {selected && (
+        <Box marginTop={1}>
+          <Text color="green">Selected: {selected}</Text>
+        </Box>
+      )}
+    </Box>
+  );
+};
+```
+
+## Focus Order
+
+Components are focused in the order they appear in the React tree. When the user presses Tab:
+1. Focus moves to the next focusable component
+2. If focused on the last component, wraps to the first
+3. Shift+Tab moves focus backward
+4. Esc clears focus (no component is focused)
+
+## Notes
+
+<Note>
+  Multiple components can use `useFocus`. Ink manages the focus state globally and ensures only one component is focused at a time.
+</Note>
+
+<Note>
+  When `isActive` is `false`, the component stays in the focus list but can't receive focus. When `isActive` becomes `true` again, the component can be focused normally.
+</Note>
+
+<Note>
+  Focus management automatically enables raw mode on stdin. This is required to detect Tab key presses.
+</Note>
+
+## Related Hooks
+
+- [useFocusManager](/hooks/use-focus-manager) - Control focus globally across all components
+- [useInput](/hooks/use-input) - Combine with `isFocused` to handle input only when focused

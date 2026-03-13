@@ -1,0 +1,59 @@
+---
+title: useFocusManager
+description: Hook for managing focus across all components
+---
+
+A React hook that returns methods to enable or disable focus management for all components or manually switch focus to the next or previous components.
+
+## Signature
+
+```typescript
+const useFocusManager = () => Output
+```
+
+## Parameters
+
+This hook takes no parameters.
+
+## Return Value
+
+<ResponseField name="enableFocus" type="() => void">
+  Enable focus management for all components.
+</ResponseField>
+
+<ResponseField name="disableFocus" type="() => void">
+  Disable focus management for all components. The currently active component (if there's one) will lose its focus.
+</ResponseField>
+
+<ResponseField name="focusNext" type="() => void">
+  Switch focus to the next focusable component. If there's no active component right now, focus will be given to the first focusable component. If the active component is the last in the list of focusable components, focus will be switched to the first focusable component.
+</ResponseField>
+
+<ResponseField name="focusPrevious" type="() => void">
+  Switch focus to the previous focusable component. If there's no active component right now, focus will be given to the first focusable component. If the active component is the first in the list of focusable components, focus will be switched to the last focusable component.
+</ResponseField>
+
+<ResponseField name="focus" type="(id: string) => void">
+  Switch focus to the element with provided `id`. If there's no element with that `id`, focus is not changed.
+</ResponseField>
+
+<ResponseField name="activeId" type="string | undefined">
+  The ID of the currently focused component, or `undefined` if no component is focused.
+</ResponseField>
+
+## Example
+
+```tsx
+import {Text, useFocusManager} from 'ink';
+
+const Example = () => {
+  const {activeId, focusNext, focusPrevious} = useFocusManager();
+
+  return (
+    <>
+      <Text>Focused: {activeId ?? 'none'}</Text>
+      <Text>Press Tab to focus next, Shift+Tab to focus previous</Text>
+    </>
+  );
+};
+```

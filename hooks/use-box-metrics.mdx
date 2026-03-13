@@ -1,0 +1,389 @@
+---
+title: 'useBoxMetrics'
+description: 'Measure box dimensions and position'
+---
+
+`useBoxMetrics` is a React hook that returns the current layout metrics for a tracked box element. It updates when layout changes (terminal resize, sibling/content changes, or position changes).
+
+## Import
+
+```jsx
+import {useBoxMetrics} from 'ink';
+```
+
+## Signature
+
+```typescript
+useBoxMetrics(ref: React.RefObject<DOMElement>): {
+  width: number;
+  height: number;
+  left: number;
+  top: number;
+  hasMeasured: boolean;
+}
+```
+
+## Parameters
+
+<ParamField path="ref" type="React.RefObject<DOMElement>" required>
+  A React ref object attached to a `<Box>` element that you want to track.
+</ParamField>
+
+## Return Value
+
+<ResponseField name="width" type="number">
+  Element width in character cells. Returns 0 until the first layout pass completes or if the ref is detached.
+</ResponseField>
+
+<ResponseField name="height" type="number">
+  Element height in lines (rows). Returns 0 until the first layout pass completes or if the ref is detached.
+</ResponseField>
+
+<ResponseField name="left" type="number">
+  Distance from the left edge of the parent in character cells. Returns 0 until measured.
+</ResponseField>
+
+<ResponseField name="top" type="number">
+  Distance from the top edge of the parent in lines. Returns 0 until measured.
+</ResponseField>
+
+<ResponseField name="hasMeasured" type="boolean">
+  Whether the currently tracked element has been measured in the latest layout pass. Use this to detect when valid metrics are available.
+</ResponseField>
+
+## Examples
+
+### Basic Box Measurement
+
+Measure a box's dimensions:
+
+```jsx
+import {useRef} from 'react';
+import {Box, Text, useBoxMetrics} from 'ink';
+
+const MeasuredBox = () => {
+  const ref = useRef(null);
+  const {width, height, left, top, hasMeasured} = useBoxMetrics(ref);
+
+  return (
+    <Box flexDirection="column">
+      <Box ref={ref} borderStyle="round" padding={1}>
+        <Text>This box is being measured</Text>
+      </Box>
+      {hasMeasured && (
+        <Text>
+          Size: {width}x{height} at position ({left}, {top})
+        </Text>
+      )}
+    </Box>
+  );
+};
+```
+
+### Cursor Positioning
+
+Use metrics to position the cursor correctly:
+
+```jsx
+import {useRef, useState} from 'react';
+import {Box, Text, useBoxMetrics, useCursor, useInput} from 'ink';
+import stringWidth from 'string-width';
+
+const InputWithBorder = () => {
+  const [text, setText] = useState('');
+  const boxRef = useRef(null);
+  const {left, top, hasMeasured} = useBoxMetrics(boxRef);
+  const {setCursorPosition} = useCursor();
+
+  useInput((input, key) => {
+    if (key.backspace) {
+      setText(t => t.slice(0, -1));
+    } else if (input) {
+      setText(t => t + input);
+    }
+  });
+
+  if (hasMeasured) {
+    // Account for border and padding (1 cell each)
+    setCursorPosition({
+      x: left + 1 + stringWidth(text),
+      y: top + 1
+    });
+  }
+
+  return (
+    <Box ref={boxRef} borderStyle="round" padding={1}>
+      <Text>{text}</Text>
+    </Box>
+  );
+};
+```
+
+### Dynamic Layout
+
+Adjust layout based on sibling dimensions:
+
+```jsx
+import {useRef} from 'react';
+import {Box, Text, useBoxMetrics} from 'ink';
+
+const AdaptiveLayout = () => {
+  const headerRef = useRef(null);
+  const {height: headerHeight, hasMeasured} = useBoxMetrics(headerRef);
+
+  return (
+    <Box flexDirection="column" height={20}>
+      <Box ref={headerRef} borderStyle="round" padding={1}>
+        <Text bold>Header</Text>
+      </Box>
+      {hasMeasured && (
+        <Box height={20 - headerHeight} borderStyle="round" padding={1}>
+          <Text>Content area (adjusted for header)</Text>
+        </Box>
+      )}
+    </Box>
+  );
+};
+```
+
+### Overflow Detection
+
+Detect when content exceeds container:
+
+```jsx
+import {useRef} from 'react';
+import {Box, Text, useBoxMetrics} from 'ink';
+
+const ScrollableArea = ({children, maxHeight}) => {
+  const contentRef = useRef(null);
+  const {height, hasMeasured} = useBoxMetrics(contentRef);
+  const hasOverflow = hasMeasured && height > maxHeight;
+
+  return (
+    <Box flexDirection="column">
+      <Box ref={contentRef} height={maxHeight} overflow="hidden">
+        {children}
+      </Box>
+      {hasOverflow && (
+        <Text dimColor>
+          ↓ More content below (scroll to see)
+        </Text>
+      )}
+    </Box>
+  );
+};
+```
+
+### Centering Elements
+
+Center a box within its parent:
+
+```jsx
+import {useRef} from 'react';
+import {Box, Text, useBoxMetrics, useWindowSize} from 'ink';
+
+const CenteredDialog = ({children}) => {
+  const dialogRef = useRef(null);
+  const {width, height, hasMeasured} = useBoxMetrics(dialogRef);
+  const {columns, rows} = useWindowSize();
+
+  const left = hasMeasured ? Math.floor((columns - width) / 2) : 0;
+  const top = hasMeasured ? Math.floor((rows - height) / 2) : 0;
+
+  return (
+    <Box paddingLeft={left} paddingTop={top}>
+      <Box ref={dialogRef} borderStyle="round" padding={2}>
+        {children}
+      </Box>
+    </Box>
+  );
+};
+
+const App = () => (
+  <CenteredDialog>
+    <Text>This dialog is centered!</Text>
+  </CenteredDialog>
+);
+```
+
+### Measure Multiple Boxes
+
+Track metrics for multiple elements:
+
+```jsx
+import {useRef} from 'react';
+import {Box, Text, useBoxMetrics} from 'ink';
+
+const Layout = () => {
+  const sidebarRef = useRef(null);
+  const contentRef = useRef(null);
+  
+  const sidebar = useBoxMetrics(sidebarRef);
+  const content = useBoxMetrics(contentRef);
+
+  return (
+    <Box flexDirection="column">
+      <Box>
+        <Box ref={sidebarRef} width={20} borderStyle="round" padding={1}>
+          <Text>Sidebar</Text>
+        </Box>
+        <Box ref={contentRef} flexGrow={1} borderStyle="round" padding={1}>
+          <Text>Content</Text>
+        </Box>
+      </Box>
+      {sidebar.hasMeasured && content.hasMeasured && (
+        <Box marginTop={1}>
+          <Text>
+            Sidebar: {sidebar.width}x{sidebar.height}, 
+            Content: {content.width}x{content.height}
+          </Text>
+        </Box>
+      )}
+    </Box>
+  );
+};
+```
+
+### Tooltip Positioning
+
+Position a tooltip relative to an element:
+
+```jsx
+import {useRef, useState} from 'react';
+import {Box, Text, useBoxMetrics, useInput} from 'ink';
+
+const ButtonWithTooltip = ({label, tooltip}) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const buttonRef = useRef(null);
+  const {left, top, width, hasMeasured} = useBoxMetrics(buttonRef);
+
+  useInput((input) => {
+    if (input === '?') {
+      setShowTooltip(show => !show);
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Box ref={buttonRef} borderStyle="round" padding={1}>
+        <Text>{label}</Text>
+      </Box>
+      {showTooltip && hasMeasured && (
+        <Box paddingLeft={left} paddingTop={top + 3}>
+          <Box borderStyle="round" padding={1} width={Math.max(width, 30)}>
+            <Text dimColor>{tooltip}</Text>
+          </Box>
+        </Box>
+      )}
+    </Box>
+  );
+};
+```
+
+### Responsive Grid
+
+Create a grid that adapts to content size:
+
+```jsx
+import {useRef, useState, useEffect} from 'react';
+import {Box, Text, useBoxMetrics} from 'ink';
+
+const ResponsiveGrid = ({items}) => {
+  const containerRef = useRef(null);
+  const {width, hasMeasured} = useBoxMetrics(containerRef);
+  const [columns, setColumns] = useState(1);
+
+  useEffect(() => {
+    if (hasMeasured) {
+      const itemWidth = 25; // Minimum item width
+      const cols = Math.max(1, Math.floor(width / itemWidth));
+      setColumns(cols);
+    }
+  }, [width, hasMeasured]);
+
+  const rows = [];
+  for (let i = 0; i < items.length; i += columns) {
+    rows.push(items.slice(i, i + columns));
+  }
+
+  return (
+    <Box ref={containerRef} flexDirection="column">
+      {rows.map((row, i) => (
+        <Box key={i}>
+          {row.map((item, j) => (
+            <Box key={j} width={Math.floor(width / columns)} padding={1}>
+              <Text>{item}</Text>
+            </Box>
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+```
+
+### Layout Debugging
+
+Visualize box boundaries and positions:
+
+```jsx
+import {useRef} from 'react';
+import {Box, Text, useBoxMetrics} from 'ink';
+
+const DebugBox = ({children, label}) => {
+  const ref = useRef(null);
+  const {width, height, left, top, hasMeasured} = useBoxMetrics(ref);
+
+  return (
+    <Box flexDirection="column">
+      <Box ref={ref} borderStyle="round" padding={1}>
+        {children}
+      </Box>
+      {hasMeasured && (
+        <Text dimColor>
+          {label}: {width}x{height} at ({left},{top})
+        </Text>
+      )}
+    </Box>
+  );
+};
+
+const App = () => (
+  <DebugBox label="Container">
+    <Text>Content inside box</Text>
+  </DebugBox>
+);
+```
+
+## When Metrics Update
+
+The hook triggers re-renders when:
+- Terminal is resized
+- Parent or sibling layout changes
+- Content inside the box changes
+- Position or dimension props change
+- The tracked ref changes to a different element
+
+## Notes
+
+<Note>
+  The hook returns `{width: 0, height: 0, left: 0, top: 0, hasMeasured: false}` until the first layout pass completes. Always check `hasMeasured` before using the metrics.
+</Note>
+
+<Note>
+  Positions (`left`, `top`) are relative to the element's **parent**, not the root or terminal origin.
+</Note>
+
+<Note>
+  The hook automatically subscribes to layout changes and cleans up when the component unmounts. You don't need to manually manage subscriptions.
+</Note>
+
+<Warning>
+  If the ref is detached (e.g., the element is unmounted), the hook returns zeros. Always verify `hasMeasured` before relying on the metrics.
+</Warning>
+
+## Related Hooks
+
+- [useWindowSize](/hooks/use-window-size) - Get terminal dimensions
+- [useCursor](/hooks/use-cursor) - Position cursor using box metrics
+- [useStdout](/hooks/use-stdout) - Access terminal dimensions without re-renders

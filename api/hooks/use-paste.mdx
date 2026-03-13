@@ -1,0 +1,56 @@
+---
+title: usePaste
+description: Hook for handling pasted text in the terminal
+---
+
+A React hook that calls `handler` whenever the user pastes text in the terminal. Bracketed paste mode (`\x1b[?2004h`) is automatically enabled while the hook is active, so pasted text arrives as a single string rather than being misinterpreted as individual key presses.
+
+`usePaste` and `useInput` can be used together in the same component. They operate on separate event channels, so paste content is never forwarded to `useInput` handlers when `usePaste` is active.
+
+## Signature
+
+```typescript
+const usePaste = (handler: (text: string) => void, options?: Options) => void
+```
+
+## Parameters
+
+<ParamField path="handler" type="(text: string) => void" required>
+  Callback function that is called when the user pastes text.
+  
+  - `text` - The full pasted string, including newlines.
+</ParamField>
+
+<ParamField path="options" type="Options">
+  Optional configuration object.
+</ParamField>
+
+<ParamField path="options.isActive" type="boolean" default="true">
+  Enable or disable the paste handler. Useful when multiple components use `usePaste` and only one should be active at a time.
+</ParamField>
+
+## Return Value
+
+This hook returns `void`.
+
+## Example
+
+```tsx
+import {useInput, usePaste} from 'ink';
+
+const MyInput = () => {
+  useInput((input, key) => {
+    // Only receives typed characters and key events, not pasted text.
+    if (key.return) {
+      // Submit
+    }
+  });
+
+  usePaste((text) => {
+    // Receives the full pasted string, including newlines.
+    console.log('Pasted:', text);
+  });
+
+  return …
+};
+```

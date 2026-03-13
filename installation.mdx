@@ -1,0 +1,206 @@
+---
+title: Installation
+description: Install Ink in your Node.js project
+---
+
+# Installation
+
+Get started with Ink by installing it in your Node.js project. Ink works with npm, yarn, and pnpm.
+
+## Requirements
+
+Before installing Ink, make sure your development environment meets these requirements:
+
+<Note>
+  **Node.js 20+** and **React 19+** are required to use Ink.
+</Note>
+
+- **Node.js**: Version 20 or higher
+- **React**: Version 19 or higher
+- **Package Manager**: npm, yarn, or pnpm
+
+## Installing Ink
+
+Ink requires both the `ink` and `react` packages to be installed.
+
+<CodeGroup>
+
+```bash npm
+npm install ink react
+```
+
+```bash yarn
+yarn add ink react
+```
+
+```bash pnpm
+pnpm add ink react
+```
+
+</CodeGroup>
+
+<Tip>
+  Ink and React are installed as regular dependencies, not dev dependencies, since your CLI will need them at runtime.
+</Tip>
+
+## Quick Scaffolding
+
+The fastest way to start a new Ink project is using `create-ink-app`, which scaffolds a complete CLI application with TypeScript support:
+
+<CodeGroup>
+
+```bash npm
+npx create-ink-app my-ink-cli
+```
+
+```bash yarn
+yarn create ink-app my-ink-cli
+```
+
+```bash pnpm
+pnpm create ink-app my-ink-cli
+```
+
+</CodeGroup>
+
+For TypeScript projects, add the `--typescript` flag:
+
+<CodeGroup>
+
+```bash npm
+npx create-ink-app --typescript my-ink-cli
+```
+
+```bash yarn
+yarn create ink-app --typescript my-ink-cli
+```
+
+```bash pnpm
+pnpm create ink-app --typescript my-ink-cli
+```
+
+</CodeGroup>
+
+## TypeScript Setup
+
+If you're using TypeScript, you'll also want to install the React type definitions:
+
+<CodeGroup>
+
+```bash npm
+npm install --save-dev @types/react
+```
+
+```bash yarn
+yarn add --dev @types/react
+```
+
+```bash pnpm
+pnpm add --save-dev @types/react
+```
+
+</CodeGroup>
+
+Make sure your `tsconfig.json` includes the JSX configuration:
+
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "target": "ES2022",
+    "moduleResolution": "node"
+  }
+}
+```
+
+## Manual JavaScript Setup
+
+If you're using JavaScript with JSX, you'll need to set up Babel to transpile JSX syntax.
+
+### Install Babel
+
+<CodeGroup>
+
+```bash npm
+npm install --save-dev @babel/core @babel/cli @babel/preset-react
+```
+
+```bash yarn
+yarn add --dev @babel/core @babel/cli @babel/preset-react
+```
+
+```bash pnpm
+pnpm add --save-dev @babel/core @babel/cli @babel/preset-react
+```
+
+</CodeGroup>
+
+### Configure Babel
+
+Create a `babel.config.json` file in your project root:
+
+```json babel.config.json
+{
+  "presets": ["@babel/preset-react"]
+}
+```
+
+### Transpile Your Code
+
+Transpile your JSX files before running:
+
+```bash
+npx babel source.js -o cli.js
+node cli.js
+```
+
+<Tip>
+  For development, you can use [import-jsx](https://github.com/vadimdemedes/import-jsx) or [@esbuild-kit/esm-loader](https://github.com/esbuild-kit/esm-loader) to import JSX files and transpile them on the fly without a build step.
+</Tip>
+
+## Verifying Installation
+
+Create a simple `hello.jsx` file to verify Ink is installed correctly:
+
+```jsx hello.jsx
+import React from 'react';
+import {render, Text} from 'ink';
+
+const Hello = () => <Text color="green">Hello from Ink!</Text>;
+
+render(<Hello />);
+```
+
+Run it with Node.js:
+
+```bash
+node hello.jsx
+```
+
+You should see green text saying "Hello from Ink!" in your terminal.
+
+<Note>
+  If you're using TypeScript or need JSX transpilation, make sure to set up your transpiler first or use `create-ink-app` for automatic configuration.
+</Note>
+
+## Module System
+
+Ink uses ES modules. Make sure your `package.json` includes:
+
+```json package.json
+{
+  "type": "module"
+}
+```
+
+If you're using CommonJS, you'll need to adjust your import statements accordingly.
+
+## Next Steps
+
+Now that Ink is installed, you're ready to build your first CLI application!
+
+<Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+  Build your first Ink application in minutes
+</Card>

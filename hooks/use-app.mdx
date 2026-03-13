@@ -1,0 +1,280 @@
+---
+title: 'useApp'
+description: 'Control app lifecycle and exit behavior'
+---
+
+`useApp` is a React hook that provides methods to control your Ink application's lifecycle. Use it to programmatically exit the app or wait for pending renders to complete.
+
+## Import
+
+```jsx
+import {useApp} from 'ink';
+```
+
+## Signature
+
+```typescript
+useApp(): {
+  exit: (errorOrResult?: Error | unknown) => void;
+  waitUntilRenderFlush: () => Promise<void>;
+}
+```
+
+## Return Value
+
+<ResponseField name="exit" type="function">
+  Exit (unmount) the entire Ink application.
+  
+  <Expandable title="Parameters">
+    <ParamField path="errorOrResult" type="Error | unknown">
+      Optional value that controls how `waitUntilExit` (from `render()`) settles:
+      - `exit()` - resolves with `undefined`
+      - `exit(error)` - rejects when `error` is an `Error` instance
+      - `exit(value)` - resolves with `value`
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="waitUntilRenderFlush" type="function">
+  Returns a promise that settles after pending render output is flushed to stdout. Useful when you need to ensure output is visible before running the next command.
+</ResponseField>
+
+## Examples
+
+### Basic Exit
+
+Exit the app after a timeout:
+
+```jsx
+import {useEffect} from 'react';
+import {useApp, Text} from 'ink';
+
+const App = () => {
+  const {exit} = useApp();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      exit();
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [exit]);
+
+  return <Text>This app will exit in 5 seconds...</Text>;
+};
+```
+
+### Exit on Keypress
+
+Let users exit with 'q':
+
+```jsx
+import {useApp, useInput, Text} from 'ink';
+
+const App = () => {
+  const {exit} = useApp();
+
+  useInput((input) => {
+    if (input === 'q') {
+      exit();
+    }
+  });
+
+  return <Text>Press 'q' to quit</Text>;
+};
+```
+
+### Exit with Error
+
+Exit with an error code for the parent process:
+
+```jsx
+import {useEffect} from 'react';
+import {useApp, Text} from 'ink';
+
+const App = () => {
+  const {exit} = useApp();
+
+  useEffect(() => {
+    async function runTask() {
+      try {
+        await performSomeTask();
+        exit(); // Success
+      } catch (error) {
+        exit(error); // This will reject waitUntilExit()
+      }
+    }
+    runTask();
+  }, [exit]);
+
+  return <Text>Running task...</Text>;
+};
+
+// In your entry file:
+const {waitUntilExit} = render(<App />);
+
+try {
+  await waitUntilExit();
+  console.log('Task completed successfully');
+  process.exit(0);
+} catch (error) {
+  console.error('Task failed:', error);
+  process.exit(1);
+}
+```
+
+### Exit with Result
+
+Return a value from your app:
+
+```jsx
+import {useState, useEffect} from 'react';
+import {useApp, Text} from 'ink';
+
+const Survey = () => {
+  const {exit} = useApp();
+  const [answers, setAnswers] = useState({});
+
+  const handleComplete = () => {
+    // Exit with the collected data
+    exit(answers);
+  };
+
+  return <Text>Survey...</Text>;
+};
+
+// In your entry file:
+const {waitUntilExit} = render(<Survey />);
+const results = await waitUntilExit();
+console.log('Survey results:', results);
+```
+
+### Wait for Render Flush
+
+Ensure output is flushed before running the next command:
+
+```jsx
+import {useEffect} from 'react';
+import {useApp, Text} from 'ink';
+import {execSync} from 'child_process';
+
+const App = () => {
+  const {waitUntilRenderFlush} = useApp();
+
+  useEffect(() => {
+    async function run() {
+      // Wait for Ink to flush output
+      await waitUntilRenderFlush();
+      
+      // Now safe to run external commands
+      execSync('npm install', {stdio: 'inherit'});
+    }
+    run();
+  }, [waitUntilRenderFlush]);
+
+  return <Text>Installing dependencies...</Text>;
+};
+```
+
+### Cleanup Before Exit
+
+Perform cleanup operations before exiting:
+
+```jsx
+import {useApp, useInput, Text} from 'ink';
+import {useState} from 'react';
+
+const App = () => {
+  const {exit} = useApp();
+  const [isSaving, setIsSaving] = useState(false);
+
+  useInput(async (input) => {
+    if (input === 'q') {
+      setIsSaving(true);
+      
+      // Perform cleanup
+      await saveData();
+      await closeConnections();
+      
+      exit();
+    }
+  });
+
+  if (isSaving) {
+    return <Text>Saving...</Text>;
+  }
+
+  return <Text>Press 'q' to quit</Text>;
+};
+```
+
+### Conditional Exit
+
+Confirm before exiting:
+
+```jsx
+import {useState} from 'react';
+import {useApp, useInput, Box, Text} from 'ink';
+
+const App = () => {
+  const {exit} = useApp();
+  const [confirmExit, setConfirmExit] = useState(false);
+
+  useInput((input) => {
+    if (!confirmExit && input === 'q') {
+      setConfirmExit(true);
+    } else if (confirmExit) {
+      if (input === 'y') {
+        exit();
+      } else if (input === 'n') {
+        setConfirmExit(false);
+      }
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      {confirmExit ? (
+        <Text>Are you sure you want to quit? (y/n)</Text>
+      ) : (
+        <Text>Press 'q' to quit</Text>
+      )}
+    </Box>
+  );
+};
+```
+
+## Usage with render()
+
+Combine with the `waitUntilExit()` method from `render()`:
+
+```jsx
+import {render} from 'ink';
+import App from './App.js';
+
+const {waitUntilExit} = render(<App />);
+
+// Wait for the app to exit
+await waitUntilExit();
+
+console.log('App has exited');
+```
+
+## Notes
+
+<Note>
+  Calling `exit()` unmounts the entire React component tree. Any cleanup in `useEffect` return functions will run.
+</Note>
+
+<Note>
+  By default, pressing Ctrl+C will exit the app. You can disable this with the `exitOnCtrlC: false` option when calling `render()`.
+</Note>
+
+<Warning>
+  If you pass an `Error` to `exit()`, the promise returned by `waitUntilExit()` will reject. Make sure to handle this in your entry file.
+</Warning>
+
+## Related Hooks
+
+- [useInput](/hooks/use-input) - Detect when users want to exit (e.g., pressing 'q')
+- [useStdout](/hooks/use-stdout) - Write final messages before exiting

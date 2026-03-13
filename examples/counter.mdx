@@ -1,0 +1,180 @@
+---
+title: Counter Example
+description: Build a simple auto-incrementing counter with React hooks
+---
+
+The counter example demonstrates the fundamentals of building an Ink application: component structure, state management, side effects, and rendering text with styling.
+
+## Complete Code
+
+Here's the full implementation from `examples/counter/counter.tsx`:
+
+```tsx
+import React from 'react';
+import {render, Text} from 'ink';
+
+function Counter() {
+  const [counter, setCounter] = React.useState(0);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCounter(prevCounter => prevCounter + 1);
+    }, 100);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+
+  return <Text color="green">{counter} tests passed</Text>;
+}
+
+render(<Counter />);
+```
+
+## How It Works
+
+### State Management
+
+The counter uses React's `useState` hook to track the current count:
+
+```tsx
+const [counter, setCounter] = React.useState(0);
+```
+
+This creates a state variable initialized to `0` and provides a `setCounter` function to update it.
+
+### Auto-Incrementing with useEffect
+
+The `useEffect` hook sets up a timer that increments the counter every 100ms:
+
+```tsx
+React.useEffect(() => {
+  const timer = setInterval(() => {
+    setCounter(prevCounter => prevCounter + 1);
+  }, 100);
+
+  return () => {
+    clearInterval(timer);
+  };
+}, []);
+```
+
+**Key concepts:**
+- The empty dependency array `[]` means the effect runs once when the component mounts
+- Using the functional form `prevCounter => prevCounter + 1` ensures we always increment from the latest value
+- The cleanup function clears the interval when the component unmounts
+
+### Rendering with Style
+
+The counter displays as green text:
+
+```tsx
+return <Text color="green">{counter} tests passed</Text>;
+```
+
+Ink's `<Text>` component supports various styling props like `color`, `bold`, `italic`, and more.
+
+## Running the Example
+
+From the Ink repository:
+
+```bash
+npm run example examples/counter
+```
+
+Or run directly:
+
+```bash
+npx tsx examples/counter/counter.tsx
+```
+
+You'll see the counter increment every 100ms:
+
+```
+0 tests passed
+1 tests passed
+2 tests passed
+...
+```
+
+## Variations
+
+### Countdown Timer
+
+Modify the example to count down instead:
+
+```tsx
+function Countdown() {
+  const [seconds, setSeconds] = React.useState(10);
+
+  React.useEffect(() => {
+    if (seconds === 0) return;
+
+    const timer = setInterval(() => {
+      setSeconds(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [seconds]);
+
+  return (
+    <Text color="yellow">
+      {seconds > 0 ? `${seconds} seconds remaining` : 'Time\'s up!'}
+    </Text>
+  );
+}
+```
+
+### Pause/Resume Controls
+
+Add keyboard controls to pause and resume:
+
+```tsx
+import {useInput} from 'ink';
+
+function ControlledCounter() {
+  const [counter, setCounter] = React.useState(0);
+  const [isPaused, setIsPaused] = React.useState(false);
+
+  useInput((input) => {
+    if (input === ' ') {
+      setIsPaused(prev => !prev);
+    }
+  });
+
+  React.useEffect(() => {
+    if (isPaused) return;
+
+    const timer = setInterval(() => {
+      setCounter(prev => prev + 1);
+    }, 100);
+
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
+  return (
+    <Text color="green">
+      {counter} (Press space to {isPaused ? 'resume' : 'pause'})
+    </Text>
+  );
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Forms & Validation" icon="keyboard" href="/examples/forms-and-validation">
+    Learn how to handle user input
+  </Card>
+  
+  <Card title="Progress Indicators" icon="spinner" href="/examples/progress-indicators">
+    Display dynamic progress and loading states
+  </Card>
+</CardGroup>
+
+## Related Concepts
+
+- [Text Component](/components/text) - Styling and formatting text
+- [Hooks](/hooks/use-input) - React hooks available in Ink
+- [App Lifecycle](/concepts/app-lifecycle) - Component mounting and cleanup

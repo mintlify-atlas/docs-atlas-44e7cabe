@@ -1,0 +1,439 @@
+---
+title: Lists & Navigation
+description: Build interactive lists with keyboard navigation and routing
+---
+
+Learn how to create selectable lists, implement arrow key navigation, and build multi-page applications with routing.
+
+## Select Input Example
+
+This example from `examples/select-input/select-input.tsx` demonstrates a navigable color picker:
+
+```tsx
+import React, {useState} from 'react';
+import {
+  render,
+  Text,
+  Box,
+  useInput,
+  useIsScreenReaderEnabled,
+} from 'ink';
+
+const items = ['Red', 'Green', 'Blue', 'Yellow', 'Magenta', 'Cyan'];
+
+function SelectInput() {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const isScreenReaderEnabled = useIsScreenReaderEnabled();
+
+  useInput((input, key) => {
+    if (key.upArrow) {
+      setSelectedIndex(previousIndex =>
+        previousIndex === 0 ? items.length - 1 : previousIndex - 1,
+      );
+    }
+
+    if (key.downArrow) {
+      setSelectedIndex(previousIndex =>
+        previousIndex === items.length - 1 ? 0 : previousIndex + 1,
+      );
+    }
+
+    if (isScreenReaderEnabled) {
+      const number = Number.parseInt(input, 10);
+      if (!Number.isNaN(number) && number > 0 && number <= items.length) {
+        setSelectedIndex(number - 1);
+      }
+    }
+  });
+
+  return (
+    <Box flexDirection="column" aria-role="list">
+      <Text>Select a color:</Text>
+      {items.map((item, index) => {
+        const isSelected = index === selectedIndex;
+        const label = isSelected ? `> ${item}` : `  ${item}`;
+        const screenReaderLabel = `${index + 1}. ${item}`;
+
+        return (
+          <Box
+            key={item}
+            aria-role="listitem"
+            aria-state={{selected: isSelected}}
+            aria-label={isScreenReaderEnabled ? screenReaderLabel : undefined}
+          >
+            <Text color={isSelected ? 'blue' : undefined}>{label}</Text>
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
+
+render(<SelectInput />);
+```
+
+## Output
+
+```
+Select a color:
+> Red
+  Green
+  Blue
+  Yellow
+  Magenta
+  Cyan
+```
+
+## Key Concepts
+
+### Circular Navigation
+
+The example implements wrap-around navigation:
+
+```tsx
+// Up arrow: wrap to bottom if at top
+if (key.upArrow) {
+  setSelectedIndex(prev =>
+    prev === 0 ? items.length - 1 : prev - 1
+  );
+}
+
+// Down arrow: wrap to top if at bottom
+if (key.downArrow) {
+  setSelectedIndex(prev =>
+    prev === items.length - 1 ? 0 : prev + 1
+  );
+}
+```
+
+### Visual Selection Indicator
+
+Different styles for selected vs unselected items:
+
+```tsx
+const isSelected = index === selectedIndex;
+const label = isSelected ? `> ${item}` : `  ${item}`;
+
+return (
+  <Text color={isSelected ? 'blue' : undefined}>
+    {label}
+  </Text>
+);
+```
+
+### Accessibility Support
+
+Screen reader users can type numbers to select items:
+
+```tsx
+const isScreenReaderEnabled = useIsScreenReaderEnabled();
+
+useInput((input, key) => {
+  if (isScreenReaderEnabled) {
+    const number = Number.parseInt(input, 10);
+    if (!Number.isNaN(number) && number > 0 && number <= items.length) {
+      setSelectedIndex(number - 1);
+    }
+  }
+});
+```
+
+### ARIA Attributes
+
+Proper semantic markup for accessibility:
+
+```tsx
+<Box flexDirection="column" aria-role="list">
+  {items.map((item, index) => (
+    <Box
+      key={item}
+      aria-role="listitem"
+      aria-state={{selected: index === selectedIndex}}
+      aria-label={isScreenReaderEnabled ? `${index + 1}. ${item}` : undefined}
+    >
+      {/* content */}
+    </Box>
+  ))}
+</Box>
+```
+
+## Table List Example
+
+From `examples/table/table.tsx`, here's a table layout for structured data:
+
+```tsx
+import React from 'react';
+import {faker} from '@faker-js/faker';
+import {Box, Text, render} from 'ink';
+
+const users = Array.from({length: 10})
+  .fill(true)
+  .map((_, index) => ({
+    id: index,
+    name: faker.internet.username(),
+    email: faker.internet.email(),
+  }));
+
+function Table() {
+  return (
+    <Box flexDirection="column" width={80}>
+      <Box>
+        <Box width="10%">
+          <Text>ID</Text>
+        </Box>
+
+        <Box width="50%">
+          <Text>Name</Text>
+        </Box>
+
+        <Box width="40%">
+          <Text>Email</Text>
+        </Box>
+      </Box>
+
+      {users.map(user => (
+        <Box key={user.id}>
+          <Box width="10%">
+            <Text>{user.id}</Text>
+          </Box>
+
+          <Box width="50%">
+            <Text>{user.name}</Text>
+          </Box>
+
+          <Box width="40%">
+            <Text>{user.email}</Text>
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+render(<Table />);
+```
+
+**Key features:**
+- Percentage-based column widths
+- Header row with column labels
+- Consistent alignment across rows
+
+## Router Example
+
+From `examples/router/router.tsx`, integrate React Router for multi-page navigation:
+
+```tsx
+import React from 'react';
+import {MemoryRouter, Routes, Route, useNavigate} from 'react-router';
+import {render, useInput, useApp, Box, Text} from 'ink';
+
+function Home() {
+  const {exit} = useApp();
+  const navigate = useNavigate();
+
+  useInput((input, key) => {
+    if (input === 'q') {
+      exit();
+    }
+
+    if (key.return) {
+      void navigate('/about');
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text bold color="green">
+        Home
+      </Text>
+      <Text>Press Enter to go to About, or "q" to quit.</Text>
+    </Box>
+  );
+}
+
+function About() {
+  const {exit} = useApp();
+  const navigate = useNavigate();
+
+  useInput((input, key) => {
+    if (input === 'q') {
+      exit();
+    }
+
+    if (key.return) {
+      void navigate('/');
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text bold color="blue">
+        About
+      </Text>
+      <Text>Press Enter to go back Home, or "q" to quit.</Text>
+    </Box>
+  );
+}
+
+function App() {
+  return (
+    <MemoryRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+      </Routes>
+    </MemoryRouter>
+  );
+}
+
+render(<App />);
+```
+
+**Key features:**
+- `MemoryRouter` for in-memory navigation (perfect for CLI apps)
+- `useNavigate` hook to programmatically navigate
+- Each route is a separate component with its own input handling
+
+## Focus Management Example
+
+From `examples/use-focus/use-focus.tsx`, manage focus across multiple elements:
+
+```tsx
+import React from 'react';
+import {Box, Text, render, useFocus} from 'ink';
+
+function Focus() {
+  return (
+    <Box flexDirection="column" padding={1}>
+      <Box marginBottom={1}>
+        <Text>
+          Press Tab to focus next element, Shift+Tab to focus previous element,
+          Esc to reset focus.
+        </Text>
+      </Box>
+      <Item label="First" />
+      <Item label="Second" />
+      <Item label="Third" />
+    </Box>
+  );
+}
+
+function Item({label}) {
+  const {isFocused} = useFocus();
+  return (
+    <Text>
+      {label} {isFocused ? <Text color="green">(focused)</Text> : null}
+    </Text>
+  );
+}
+
+render(<Focus />);
+```
+
+**Key features:**
+- Automatic Tab/Shift+Tab navigation
+- `useFocus` hook to detect focus state
+- No manual focus management needed
+
+## Advanced List Patterns
+
+### Multi-Select List
+
+```tsx
+function MultiSelect({items}) {
+  const [selectedIndices, setSelectedIndices] = useState(new Set());
+  const [cursorIndex, setCursorIndex] = useState(0);
+
+  useInput((input, key) => {
+    if (key.upArrow) {
+      setCursorIndex(prev => Math.max(0, prev - 1));
+    }
+    if (key.downArrow) {
+      setCursorIndex(prev => Math.min(items.length - 1, prev + 1));
+    }
+    if (input === ' ') {
+      setSelectedIndices(prev => {
+        const next = new Set(prev);
+        if (next.has(cursorIndex)) {
+          next.delete(cursorIndex);
+        } else {
+          next.add(cursorIndex);
+        }
+        return next;
+      });
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      {items.map((item, index) => (
+        <Text key={item}>
+          {index === cursorIndex ? '> ' : '  '}
+          {selectedIndices.has(index) ? '[x] ' : '[ ] '}
+          {item}
+        </Text>
+      ))}
+    </Box>
+  );
+}
+```
+
+### Paginated List
+
+```tsx
+function PaginatedList({items, itemsPerPage = 10}) {
+  const [page, setPage] = useState(0);
+  const totalPages = Math.ceil(items.length / itemsPerPage);
+  
+  const startIndex = page * itemsPerPage;
+  const visibleItems = items.slice(startIndex, startIndex + itemsPerPage);
+
+  useInput((input, key) => {
+    if (key.leftArrow) {
+      setPage(prev => Math.max(0, prev - 1));
+    }
+    if (key.rightArrow) {
+      setPage(prev => Math.min(totalPages - 1, prev + 1));
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      {visibleItems.map(item => (
+        <Text key={item}>{item}</Text>
+      ))}
+      <Text dimColor>
+        Page {page + 1} of {totalPages} (← → to navigate)
+      </Text>
+    </Box>
+  );
+}
+```
+
+## Running the Examples
+
+```bash
+# Select input
+npm run example examples/select-input
+
+# Table
+npm run example examples/table
+
+# Router
+npm run example examples/router
+
+# Focus management
+npm run example examples/use-focus
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Progress Indicators" icon="spinner" href="/examples/progress-indicators">
+    Add loading states and progress tracking
+  </Card>
+  
+  <Card title="useFocus Hook" icon="code" href="/hooks/use-focus">
+    API reference for focus management
+  </Card>
+</CardGroup>

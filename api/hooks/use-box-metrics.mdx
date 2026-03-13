@@ -1,0 +1,66 @@
+---
+title: useBoxMetrics
+description: Hook for tracking box element layout metrics
+---
+
+A React hook that returns the current layout metrics for a tracked box element. It updates when layout changes (for example terminal resize, sibling/content changes, or position changes).
+
+The hook returns `{width: 0, height: 0, left: 0, top: 0}` until the first layout pass completes. It also returns zeros when the tracked ref is detached.
+
+Use `hasMeasured` to detect when the currently tracked element has been measured.
+
+## Signature
+
+```typescript
+const useBoxMetrics = (ref: RefObject<DOMElement>) => UseBoxMetricsResult
+```
+
+## Parameters
+
+<ParamField path="ref" type="RefObject<DOMElement>" required>
+  A React ref object pointing to the element whose metrics you want to track.
+</ParamField>
+
+## Return Value
+
+Returns a `UseBoxMetricsResult` object containing box metrics and measurement status.
+
+<ResponseField name="width" type="number">
+  Element width.
+</ResponseField>
+
+<ResponseField name="height" type="number">
+  Element height.
+</ResponseField>
+
+<ResponseField name="left" type="number">
+  Distance from the left edge of the parent.
+</ResponseField>
+
+<ResponseField name="top" type="number">
+  Distance from the top edge of the parent.
+</ResponseField>
+
+<ResponseField name="hasMeasured" type="boolean">
+  Whether the currently tracked element has been measured in the latest layout pass.
+</ResponseField>
+
+## Example
+
+```tsx
+import {useRef} from 'react';
+import {Box, Text, useBoxMetrics} from 'ink';
+
+const Example = () => {
+  const ref = useRef(null);
+  const {width, height, left, top, hasMeasured} = useBoxMetrics(ref);
+  
+  return (
+    <Box ref={ref}>
+      <Text>
+        {hasMeasured ? `${width}x${height} at ${left},${top}` : 'Measuring...'}
+      </Text>
+    </Box>
+  );
+};
+```

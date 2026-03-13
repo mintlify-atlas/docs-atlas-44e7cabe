@@ -1,0 +1,310 @@
+---
+title: 'useStdin'
+description: 'Access the stdin stream and raw mode controls'
+---
+
+`useStdin` is a React hook that provides access to the stdin stream and stdin-related utilities. Use it when you need direct access to the input stream or need to control raw mode for custom input handling.
+
+## Import
+
+```jsx
+import {useStdin} from 'ink';
+```
+
+## Signature
+
+```typescript
+useStdin(): {
+  stdin: stream.Readable;
+  isRawModeSupported: boolean;
+  setRawMode: (enabled: boolean) => void;
+}
+```
+
+## Return Value
+
+<ResponseField name="stdin" type="stream.Readable">
+  The stdin stream passed to `render()` in options, or `process.stdin` by default. Useful if your app needs to handle user input directly.
+</ResponseField>
+
+<ResponseField name="isRawModeSupported" type="boolean">
+  Whether the current stdin supports `setRawMode`. Use this to gracefully fall back in environments where raw mode isn't supported (e.g., when stdin is piped or redirected).
+</ResponseField>
+
+<ResponseField name="setRawMode" type="function">
+  Enable or disable raw mode on stdin. In raw mode, input is not buffered and special keys are not processed by the terminal.
+  
+  <Expandable title="Parameters">
+    <ParamField path="enabled" type="boolean">
+      `true` to enable raw mode, `false` to disable it.
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+## Examples
+
+### Check Raw Mode Support
+
+Gracefully handle environments without raw mode:
+
+```jsx
+import {useStdin, Text, Box} from 'ink';
+
+const App = () => {
+  const {isRawModeSupported} = useStdin();
+
+  return (
+    <Box flexDirection="column">
+      {isRawModeSupported ? (
+        <Text color="green">Raw mode supported</Text>
+      ) : (
+        <Text color="yellow">Raw mode not supported - interactive features disabled</Text>
+      )}
+    </Box>
+  );
+};
+```
+
+### Conditional Input Component
+
+Render different UI based on raw mode support:
+
+```jsx
+import {useStdin, Text} from 'ink';
+import InteractiveInput from './InteractiveInput.js';
+import SimpleInput from './SimpleInput.js';
+
+const App = () => {
+  const {isRawModeSupported} = useStdin();
+
+  return isRawModeSupported ? (
+    <InteractiveInput />
+  ) : (
+    <SimpleInput />
+  );
+};
+```
+
+### Manual Raw Mode Control
+
+Control raw mode manually for custom input handling:
+
+```jsx
+import {useEffect} from 'react';
+import {useStdin, Text} from 'ink';
+
+const CustomInput = () => {
+  const {stdin, setRawMode, isRawModeSupported} = useStdin();
+
+  useEffect(() => {
+    if (!isRawModeSupported) {
+      return;
+    }
+
+    setRawMode(true);
+
+    const handleData = (data) => {
+      // Handle raw input data
+      console.log('Raw input:', data.toString('hex'));
+    };
+
+    stdin.on('data', handleData);
+
+    return () => {
+      stdin.off('data', handleData);
+      setRawMode(false);
+    };
+  }, [stdin, setRawMode, isRawModeSupported]);
+
+  return <Text>Listening for raw input...</Text>;
+};
+```
+
+### Toggle Raw Mode
+
+Enable raw mode only when needed:
+
+```jsx
+import {useState, useEffect} from 'react';
+import {Box, Text, useStdin, useInput} from 'ink';
+
+const App = () => {
+  const [interactiveMode, setInteractiveMode] = useState(false);
+  const {setRawMode, isRawModeSupported} = useStdin();
+
+  useEffect(() => {
+    if (isRawModeSupported && interactiveMode) {
+      setRawMode(true);
+      return () => setRawMode(false);
+    }
+  }, [interactiveMode, setRawMode, isRawModeSupported]);
+
+  useInput((input) => {
+    if (input === 'i') {
+      setInteractiveMode(true);
+    } else if (input === 'q') {
+      setInteractiveMode(false);
+    }
+  }, {isActive: interactiveMode});
+
+  return (
+    <Box flexDirection="column">
+      <Text>Mode: {interactiveMode ? 'Interactive' : 'Normal'}</Text>
+      <Text dimColor>Press 'i' for interactive, 'q' to quit</Text>
+    </Box>
+  );
+};
+```
+
+### Direct Stdin Access
+
+Read data directly from stdin:
+
+```jsx
+import {useEffect, useState} from 'react';
+import {useStdin, Text, Box} from 'ink';
+
+const StreamReader = () => {
+  const {stdin} = useStdin();
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    const handleData = (chunk) => {
+      setData(prev => [...prev, chunk.toString()]);
+    };
+
+    stdin.on('data', handleData);
+
+    return () => {
+      stdin.off('data', handleData);
+    };
+  }, [stdin]);
+
+  return (
+    <Box flexDirection="column">
+      <Text>Received {data.length} chunks:</Text>
+      {data.slice(-5).map((chunk, i) => (
+        <Text key={i} dimColor>{chunk}</Text>
+      ))}
+    </Box>
+  );
+};
+```
+
+### Stdin Properties
+
+Access stdin stream properties:
+
+```jsx
+import {useStdin, Box, Text} from 'ink';
+
+const StdinInfo = () => {
+  const {stdin, isRawModeSupported} = useStdin();
+
+  return (
+    <Box flexDirection="column">
+      <Text bold>Stdin Information:</Text>
+      <Text>Is TTY: {stdin.isTTY ? 'yes' : 'no'}</Text>
+      <Text>Raw mode supported: {isRawModeSupported ? 'yes' : 'no'}</Text>
+      {stdin.isTTY && (
+        <>
+          <Text>Readable: {stdin.readable ? 'yes' : 'no'}</Text>
+          <Text>Encoding: {stdin.readableEncoding || 'none'}</Text>
+        </>
+      )}
+    </Box>
+  );
+};
+```
+
+### Custom Keypress Parser
+
+Implement your own keypress handling:
+
+```jsx
+import {useEffect, useState} from 'react';
+import {useStdin, Text, Box} from 'ink';
+
+const CustomKeyHandler = () => {
+  const {stdin, setRawMode, isRawModeSupported} = useStdin();
+  const [lastKey, setLastKey] = useState(null);
+
+  useEffect(() => {
+    if (!isRawModeSupported) return;
+
+    setRawMode(true);
+
+    const handleData = (data) => {
+      const char = data.toString();
+      const code = data[0];
+
+      setLastKey({
+        char: char.replace(/[\x00-\x1F\x7F]/g, ''),
+        code: code,
+        hex: data.toString('hex'),
+        isControl: code < 32,
+      });
+    };
+
+    stdin.on('data', handleData);
+
+    return () => {
+      stdin.off('data', handleData);
+      setRawMode(false);
+    };
+  }, [stdin, setRawMode, isRawModeSupported]);
+
+  if (!isRawModeSupported) {
+    return <Text color="red">Raw mode not supported</Text>;
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Text>Press any key to see details</Text>
+      {lastKey && (
+        <Box flexDirection="column" marginTop={1}>
+          <Text>Character: {lastKey.char || '(control)'}</Text>
+          <Text>Code: {lastKey.code}</Text>
+          <Text>Hex: {lastKey.hex}</Text>
+          <Text>Is Control: {lastKey.isControl ? 'yes' : 'no'}</Text>
+        </Box>
+      )}
+    </Box>
+  );
+};
+```
+
+## Raw Mode
+
+Raw mode is a terminal mode where:
+
+- Input is not line-buffered (characters are available immediately)
+- No special processing of input characters (Ctrl+C doesn't send SIGINT)
+- No echoing of input characters to the terminal
+- Special keys (arrows, function keys) send escape sequences
+
+Ink automatically enables raw mode when you use `useInput` or `useFocus`. You only need to manage it manually if you're implementing custom input handling.
+
+## Notes
+
+<Warning>
+  Always check `isRawModeSupported` before calling `setRawMode()`. Calling `setRawMode()` on a stream that doesn't support it will throw an error.
+</Warning>
+
+<Note>
+  When raw mode is enabled, Ctrl+C will not automatically terminate your process unless you handle it explicitly or use Ink's default `exitOnCtrlC` behavior.
+</Note>
+
+<Note>
+  Most Ink hooks that handle input (`useInput`, `useFocus`, `usePaste`) automatically manage raw mode for you. You typically only need `useStdin` for advanced use cases.
+</Note>
+
+<Note>
+  The `stdin` stream is the same stream you can pass to `render()` via options. If you don't pass a custom stream, it defaults to `process.stdin`.
+</Note>
+
+## Related Hooks
+
+- [useInput](/hooks/use-input) - Higher-level keyboard input handling (manages raw mode automatically)
+- [usePaste](/hooks/use-paste) - Handle pasted text (manages raw mode automatically)
+- [useFocus](/hooks/use-focus) - Focus management (manages raw mode automatically)

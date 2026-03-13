@@ -1,0 +1,249 @@
+---
+title: renderToString()
+description: Render a React element to a string synchronously for testing and static output
+---
+
+## Function Signature
+
+```typescript
+function renderToString(
+  node: ReactNode,
+  options?: RenderToStringOptions
+): string
+```
+
+## Description
+
+Render a React element to a string synchronously. Unlike `render()`, this function does not write to stdout, does not set up any terminal event listeners, and returns the rendered output as a string.
+
+Useful for generating documentation, writing output to files, testing, or any scenario where you need the rendered output as a string without starting a persistent terminal application.
+
+## Parameters
+
+<ParamField path="node" type="ReactNode" required>
+  The React component tree to render
+</ParamField>
+
+<ParamField path="options" type="RenderToStringOptions">
+  Configuration options for string rendering
+
+  <Expandable title="options properties">
+    <ParamField path="columns" type="number" default={80}>
+      Width of the virtual terminal in columns. Controls where text wrapping occurs
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Return Value
+
+<ResponseField name="output" type="string">
+  The rendered output as a string
+</ResponseField>
+
+## Examples
+
+### Basic Usage
+
+```jsx
+import {renderToString, Text, Box} from 'ink';
+
+const output = renderToString(
+  <Box padding={1}>
+    <Text color="green">Hello World</Text>
+  </Box>
+);
+
+console.log(output);
+```
+
+### Custom Column Width
+
+```jsx
+import {renderToString, Text} from 'ink';
+
+const longText = 'A'.repeat(100);
+
+const output = renderToString(
+  <Text>{longText}</Text>,
+  {columns: 40}
+);
+
+// Text wraps at 40 columns
+console.log(output);
+```
+
+### Testing Component Output
+
+```jsx
+import {renderToString, Text} from 'ink';
+
+const Greeting = ({name}) => <Text>Hello, {name}!</Text>;
+
+const output = renderToString(<Greeting name="Alice" />);
+
+// Use in tests
+expect(output).toBe('Hello, Alice!');
+```
+
+### With Layout Components
+
+```jsx
+import {renderToString, Box, Text} from 'ink';
+
+const Card = ({title, content}) => (
+  <Box flexDirection="column" borderStyle="round" padding={1}>
+    <Text bold>{title}</Text>
+    <Text>{content}</Text>
+  </Box>
+);
+
+const output = renderToString(
+  <Card 
+    title="Status" 
+    content="Everything is working fine"
+  />
+);
+
+console.log(output);
+```
+
+### Generating Documentation
+
+```jsx
+import {renderToString, Box, Text} from 'ink';
+import fs from 'fs';
+
+const CommandHelp = () => (
+  <Box flexDirection="column">
+    <Text bold>Available Commands:</Text>
+    <Text>  start - Start the server</Text>
+    <Text>  stop  - Stop the server</Text>
+    <Text>  help  - Show this help</Text>
+  </Box>
+);
+
+const helpText = renderToString(<CommandHelp />, {columns: 60});
+fs.writeFileSync('HELP.txt', helpText);
+```
+
+### With Static Content
+
+```jsx
+import {renderToString, Static, Box, Text} from 'ink';
+
+const logs = [
+  {id: 1, message: 'Server started'},
+  {id: 2, message: 'Connected to database'},
+  {id: 3, message: 'Ready to accept requests'}
+];
+
+const LogOutput = () => (
+  <>
+    <Static items={logs}>
+      {log => (
+        <Box key={log.id}>
+          <Text color="green">✓ {log.message}</Text>
+        </Box>
+      )}
+    </Static>
+    <Text dimColor>Total logs: {logs.length}</Text>
+  </>
+);
+
+const output = renderToString(<LogOutput />);
+console.log(output);
+```
+
+## Behavior Notes
+
+### Hooks Return Default Values
+
+Terminal-specific hooks return default no-op values since there is no terminal session:
+
+- `useInput` - No input events are triggered
+- `useStdin` - Returns a mock stdin stream
+- `useStdout` - Returns a mock stdout stream
+- `useStderr` - Returns a mock stderr stream
+- `useWindowSize` - Returns default dimensions
+- `useApp` - Returns no-op functions
+- `useFocus` - Returns `{isFocused: false}`
+- `useFocusManager` - Returns no-op functions
+
+These hooks will not throw, but they will not function as in a live terminal.
+
+### Effect Timing
+
+- **`useEffect` callbacks** will execute during rendering (due to synchronous rendering mode), but state updates they trigger will not affect the returned output, which reflects the initial render
+- **`useLayoutEffect` callbacks** fire synchronously during commit, so state updates they trigger **will** be reflected in the output
+
+### Static Component Support
+
+The `<Static>` component is supported — its output is prepended to the dynamic output.
+
+### Error Handling
+
+If a component throws during rendering, the error is propagated to the caller after cleanup.
+
+```jsx
+import {renderToString, Text} from 'ink';
+
+const BrokenComponent = () => {
+  throw new Error('Something went wrong');
+};
+
+try {
+  renderToString(<BrokenComponent />);
+} catch (error) {
+  console.error('Render failed:', error.message);
+}
+```
+
+## Use Cases
+
+### Testing
+
+Use `renderToString()` in your test suite to verify component output:
+
+```jsx
+import {renderToString, Text} from 'ink';
+import {test, expect} from 'vitest';
+
+test('renders greeting correctly', () => {
+  const output = renderToString(<Text>Hello World</Text>);
+  expect(output).toBe('Hello World');
+});
+```
+
+### Static Site Generation
+
+Generate static documentation or help text:
+
+```jsx
+const helpPages = commands.map(cmd => ({
+  filename: `${cmd.name}.txt`,
+  content: renderToString(<CommandHelp command={cmd} />)
+}));
+
+helpPages.forEach(page => {
+  fs.writeFileSync(page.filename, page.content);
+});
+```
+
+### Snapshots
+
+Create output snapshots for comparison:
+
+```jsx
+const snapshot = renderToString(<Dashboard data={mockData} />);
+fs.writeFileSync('__snapshots__/dashboard.txt', snapshot);
+```
+
+## Comparison with render()
+
+| Feature | `render()` | `renderToString()` |
+|---------|------------|-------------------|
+| Output | Writes to stdout | Returns a string |
+| Terminal events | Sets up listeners | No listeners |
+| Async behavior | Supports live updates | Synchronous only |
+| Input handling | Full support | Mock values |
+| Use case | CLI applications | Testing, static output |

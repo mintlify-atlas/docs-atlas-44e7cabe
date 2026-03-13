@@ -1,0 +1,421 @@
+---
+title: Static
+description: Permanently render output above dynamic content for logs and completed tasks
+icon: list
+---
+
+The `<Static>` component permanently renders its output above everything else. It's useful for displaying activity like completed tasks or logs—things that don't change after they're rendered (hence the name "Static").
+
+<Note>
+  Use `<Static>` when you can't know or control the number of items that need to be rendered, and those items don't change once displayed.
+</Note>
+
+## When to Use Static
+
+`<Static>` is perfect for:
+
+- **Test results** - Display completed tests while showing a progress bar
+- **Build logs** - Show compilation output while displaying current status
+- **Task lists** - Render finished tasks above a spinner
+- **Historical data** - Any output that's written once and never changes
+
+## Basic Usage
+
+```jsx
+import React, {useState, useEffect} from 'react';
+import {render, Static, Box, Text} from 'ink';
+
+const Example = () => {
+  const [tests, setTests] = useState([]);
+
+  useEffect(() => {
+    let completedTests = 0;
+    const run = () => {
+      if (completedTests++ < 10) {
+        setTests(prev => [
+          ...prev,
+          {
+            id: prev.length,
+            title: `Test #${prev.length + 1}`
+          }
+        ]);
+        setTimeout(run, 100);
+      }
+    };
+    run();
+  }, []);
+
+  return (
+    <>
+      {/* Rendered once, permanently */}
+      <Static items={tests}>
+        {test => (
+          <Box key={test.id}>
+            <Text color="green">✔ {test.title}</Text>
+          </Box>
+        )}
+      </Static>
+
+      {/* Updates dynamically */}
+      <Box marginTop={1}>
+        <Text dimColor>Completed: {tests.length}</Text>
+      </Box>
+    </>
+  );
+};
+
+render(<Example />);
+```
+
+## Props
+
+### items
+
+<ParamField path="items" type="Array" required>
+  Array of items of any type to render. Each item is passed to the render function.
+</ParamField>
+
+```jsx
+const items = [
+  {id: 1, name: 'Task 1'},
+  {id: 2, name: 'Task 2'},
+  {id: 3, name: 'Task 3'}
+];
+
+<Static items={items}>
+  {item => (
+    <Box key={item.id}>
+      <Text>{item.name}</Text>
+    </Box>
+  )}
+</Static>
+```
+
+### style
+
+<ParamField path="style" type="object">
+  Styles to apply to the container of child elements. Accepts any `<Box>` style properties.
+</ParamField>
+
+```jsx
+<Static items={items} style={{padding: 1, borderStyle: 'round'}}>
+  {item => (
+    <Box key={item.id}>
+      <Text>{item.name}</Text>
+    </Box>
+  )}
+</Static>
+```
+
+### children
+
+<ParamField path="children" type="function" required>
+  Function called to render every item in the `items` array.
+  
+  **Parameters:**
+  - `item` - The current item from the array
+  - `index` - The index of the item in the array
+  
+  **Returns:** A React element with a `key` prop
+</ParamField>
+
+```jsx
+<Static items={['a', 'b', 'c']}>
+  {(item, index) => (
+    <Box key={index}>
+      <Text>Item {index}: {item}</Text>
+    </Box>
+  )}
+</Static>
+```
+
+## How It Works
+
+<Info>
+  `<Static>` only renders **new items** added to the `items` array. Changes to previously rendered items are ignored.
+</Info>
+
+When you add new items to the `items` prop:
+
+1. Only the new items are rendered
+2. They're permanently written above your dynamic content
+3. They never update or re-render
+4. Your dynamic content continues to update below
+
+```jsx
+const [logs, setLogs] = useState(['Starting...']);
+
+// Adding a new log - will render
+setLogs([...logs, 'Completed step 1']);
+
+// Modifying an old log - will NOT re-render
+const newLogs = [...logs];
+newLogs[0] = 'Modified starting...';
+setLogs(newLogs); // Old logs won't change
+```
+
+## Real-World Examples
+
+### Test Runner
+
+From the official Ink examples:
+
+```jsx
+import React, {useState, useEffect} from 'react';
+import {Box, Text, Static} from 'ink';
+
+const TestRunner = () => {
+  const [tests, setTests] = useState([]);
+
+  useEffect(() => {
+    let completedTests = 0;
+    let timer;
+
+    const run = () => {
+      if (completedTests++ < 10) {
+        setTests(previousTests => [
+          ...previousTests,
+          {
+            id: previousTests.length,
+            title: `Test #${previousTests.length + 1}`
+          }
+        ]);
+
+        timer = setTimeout(run, 100);
+      }
+    };
+
+    run();
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []);
+
+  return (
+    <>
+      <Static items={tests}>
+        {test => (
+          <Box key={test.id}>
+            <Text color="green">✔ {test.title}</Text>
+          </Box>
+        )}
+      </Static>
+
+      <Box marginTop={1}>
+        <Text dimColor>Completed tests: {tests.length}</Text>
+      </Box>
+    </>
+  );
+};
+```
+
+### Build Logger
+
+```jsx
+const BuildLogger = () => {
+  const [logs, setLogs] = useState([]);
+  const [currentFile, setCurrentFile] = useState('');
+
+  return (
+    <>
+      <Static items={logs}>
+        {log => (
+          <Box key={log.id}>
+            <Text color={log.type === 'error' ? 'red' : 'gray'}>
+              {log.timestamp} {log.message}
+            </Text>
+          </Box>
+        )}
+      </Static>
+
+      <Box marginTop={1} borderStyle="round" padding={1}>
+        <Text>
+          Building: <Text color="cyan">{currentFile}</Text>
+        </Text>
+      </Box>
+    </>
+  );
+};
+```
+
+### Task Progress
+
+```jsx
+const TaskProgress = () => {
+  const [completed, setCompleted] = useState([]);
+  const [current, setCurrent] = useState('Initializing...');
+
+  return (
+    <Box flexDirection="column">
+      <Static items={completed}>
+        {task => (
+          <Box key={task.id}>
+            <Text color="green">✓</Text>
+            <Text> {task.name} </Text>
+            <Text dimColor>({task.duration}ms)</Text>
+          </Box>
+        )}
+      </Static>
+
+      <Box marginTop={1}>
+        <Text color="yellow">⋯</Text>
+        <Text> {current}</Text>
+      </Box>
+    </Box>
+  );
+};
+```
+
+### Download Progress with History
+
+```jsx
+const DownloadManager = () => {
+  const [downloads, setDownloads] = useState([]);
+  const [active, setActive] = useState([]);
+
+  const completeDownload = (id) => {
+    const download = active.find(d => d.id === id);
+    setDownloads(prev => [...prev, {...download, completed: true}]);
+    setActive(prev => prev.filter(d => d.id !== id));
+  };
+
+  return (
+    <Box flexDirection="column">
+      {/* Completed downloads - never change */}
+      <Static items={downloads}>
+        {download => (
+          <Box key={download.id}>
+            <Text color="green">✓ {download.name}</Text>
+            <Text dimColor> ({download.size})</Text>
+          </Box>
+        )}
+      </Static>
+
+      {/* Active downloads - update in real-time */}
+      {active.map(download => (
+        <Box key={download.id}>
+          <Text>↓ {download.name}</Text>
+          <Text color="cyan"> {download.progress}%</Text>
+        </Box>
+      ))}
+    </Box>
+  );
+};
+```
+
+## Common Patterns
+
+### With Timestamps
+
+```jsx
+<Static items={logs}>
+  {log => (
+    <Box key={log.id}>
+      <Text dimColor>[{log.timestamp}]</Text>
+      <Text> {log.message}</Text>
+    </Box>
+  )}
+</Static>
+```
+
+### With Status Icons
+
+```jsx
+<Static items={tasks}>
+  {task => (
+    <Box key={task.id}>
+      {task.success ? (
+        <Text color="green">✓</Text>
+      ) : (
+        <Text color="red">✗</Text>
+      )}
+      <Text> {task.name}</Text>
+    </Box>
+  )}
+</Static>
+```
+
+### With Styled Container
+
+```jsx
+<Static 
+  items={items}
+  style={{
+    padding: 1,
+    borderStyle: 'round',
+    borderColor: 'gray',
+    marginBottom: 1
+  }}
+>
+  {item => (
+    <Box key={item.id}>
+      <Text>{item.content}</Text>
+    </Box>
+  )}
+</Static>
+```
+
+## Important Notes
+
+<Warning>
+  The render function must return an element with a `key` prop. Without it, React will throw warnings.
+</Warning>
+
+```jsx
+{/* ✅ Correct */}
+<Static items={items}>
+  {(item, index) => (
+    <Box key={item.id || index}>
+      <Text>{item.name}</Text>
+    </Box>
+  )}
+</Static>
+
+{/* ❌ Wrong - missing key */}
+<Static items={items}>
+  {item => (
+    <Box>
+      <Text>{item.name}</Text>
+    </Box>
+  )}
+</Static>
+```
+
+<Info>
+  Changes to items that have already been rendered are ignored. Only new items trigger renders.
+</Info>
+
+```jsx
+// This will render the new item
+setItems([...items, newItem]);
+
+// This will NOT update the first item
+const updated = [...items];
+updated[0] = modifiedItem;
+setItems(updated);
+```
+
+## Real-World Usage
+
+`<Static>` is used by many popular tools:
+
+- **[Tap](https://github.com/tapjs/node-tap)** - Displays completed test results
+- **[Gatsby](https://github.com/gatsbyjs/gatsby)** - Shows generated pages during build
+- **Package installers** - Show completed installations while displaying current progress
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Box" href="/components/box">
+    Container for layout and styling
+  </Card>
+  
+  <Card title="Text" href="/components/text">
+    Display and style text output
+  </Card>
+  
+  <Card title="useStdout" href="/hooks/use-stdout">
+    Write to stdout outside of Ink rendering
+  </Card>
+</CardGroup>

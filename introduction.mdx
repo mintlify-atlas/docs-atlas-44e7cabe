@@ -1,0 +1,122 @@
+---
+title: Introduction
+description: Build command-line interfaces with React components
+---
+
+# Introduction to Ink
+
+Ink provides the same component-based UI building experience that React offers in the browser, but for command-line apps. If you are already familiar with React, you already know Ink.
+
+## What is Ink?
+
+Ink is a React renderer for CLI applications. It lets you build beautiful command-line interfaces using the declarative component approach you know from React web development.
+
+```jsx
+import React, {useState, useEffect} from 'react';
+import {render, Text} from 'ink';
+
+const Counter = () => {
+	const [counter, setCounter] = useState(0);
+
+	useEffect(() => {
+		const timer = setInterval(() => {
+			setCounter(previousCounter => previousCounter + 1);
+		}, 100);
+
+		return () => {
+			clearInterval(timer);
+		};
+	}, []);
+
+	return <Text color="green">{counter} tests passed</Text>;
+};
+
+render(<Counter />);
+```
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="React-Based" icon="react">
+    Use familiar React concepts like hooks, components, state, and effects to build your CLI.
+  </Card>
+  
+  <Card title="Flexbox Layouts" icon="layout-grid">
+    Uses Yoga layout engine to provide CSS-like Flexbox properties for building complex UIs.
+  </Card>
+  
+  <Card title="Full React Support" icon="sparkles">
+    All features of React are supported including hooks, context, suspense, and error boundaries.
+  </Card>
+  
+  <Card title="Built-in Components" icon="cube">
+    Includes components like Text, Box, Static, Transform, Newline, and Spacer out of the box.
+  </Card>
+</CardGroup>
+
+## Why Use Ink?
+
+### Familiar Development Experience
+
+If you know React, you already know how to use Ink. No need to learn new paradigms or APIs for building CLI applications.
+
+### Declarative UI
+
+Describe what your interface should look like, and let Ink handle the rendering. No more manual cursor positioning or terminal state management.
+
+### Component Reusability
+
+Build reusable components for your CLI applications just like you would for web apps. Share components across projects or with the community.
+
+### Powerful Layout System
+
+Ink uses Facebook's Yoga layout engine, which means you can use Flexbox properties to create responsive, complex layouts in the terminal.
+
+## Who Uses Ink?
+
+Ink powers the CLI tools of some of the most innovative companies and projects:
+
+- **Claude Code** - An agentic coding tool made by Anthropic
+- **Gemini CLI** - An agentic coding tool made by Google
+- **GitHub Copilot CLI** - AI-powered command-line assistant
+- **Cloudflare Wrangler** - CLI for Cloudflare Workers
+- **Shopify CLI** - Build apps, themes, and storefronts
+- **Gatsby** - Modern web framework for blazing-fast websites
+- **Prisma** - Unified data layer for modern applications
+- **Linear** - Internal CLI for managing deployments and configs
+- **Terraform CDK** - Cloud Development Kit for HashiCorp Terraform
+
+<Note>
+  Ink is trusted by companies like Anthropic, Google, GitHub, Cloudflare, and Shopify to power their developer tools.
+</Note>
+
+## Ink vs Traditional CLI Development
+
+| Feature | Traditional CLI | Ink |
+|---------|----------------|-----|
+| **UI Updates** | Manual cursor management | Automatic re-rendering |
+| **Layout** | Manual positioning | Flexbox layouts |
+| **State Management** | Global variables | React state & hooks |
+| **Component Reuse** | Difficult | Easy with React components |
+| **Testing** | Complex | Simple with React testing tools |
+| **Learning Curve** | Terminal-specific APIs | Familiar React patterns |
+
+## How It Works
+
+Ink renders React components to the terminal instead of the browser DOM. It uses:
+
+1. **React Reconciler** - The same reconciler that powers React DOM and React Native
+2. **Yoga Layout Engine** - Facebook's cross-platform layout engine for Flexbox
+3. **ANSI Escape Codes** - For colors, styles, and cursor positioning in the terminal
+
+<Tip>
+  Since Ink is a React renderer, all features of React are supported. Head over to the [React documentation](https://react.dev) to learn about React concepts.
+</Tip>
+
+## Next Steps
+
+Ready to get started? Follow the installation guide to set up Ink in your project.
+
+<Card title="Installation" icon="download" href="/installation">
+  Learn how to install Ink with npm, yarn, or pnpm
+</Card>

@@ -1,0 +1,321 @@
+---
+title: React Devtools
+description: Debug and inspect your Ink applications with React DevTools
+---
+
+Ink supports [React DevTools](https://github.com/facebook/react/tree/master/packages/react-devtools) out of the box, allowing you to inspect component trees, view and modify props, and debug your CLI applications just like browser-based React apps.
+
+## Installation
+
+First, install the optional `react-devtools-core` dependency:
+
+```bash
+npm install --save-dev react-devtools-core
+```
+
+<Note>
+  The `react-devtools-core` package is required for DevTools integration. Make sure to install it before attempting to use DevTools with your Ink app.
+</Note>
+
+## Quick Start
+
+<Steps>
+  <Step title="Start your Ink app with DEV flag">
+    Run your CLI application with the `DEV=true` environment variable:
+    
+    ```bash
+    DEV=true node my-cli.js
+    ```
+    
+    or
+    
+    ```bash
+    DEV=true my-cli
+    ```
+  </Step>
+  
+  <Step title="Launch React DevTools">
+    In a separate terminal window, start the React DevTools server:
+    
+    ```bash
+    npx react-devtools
+    ```
+  </Step>
+  
+  <Step title="Inspect your app">
+    Once DevTools connects, you'll see your component tree and can inspect props, state, and hooks.
+  </Step>
+</Steps>
+
+## How It Works
+
+When you set `DEV=true`, Ink automatically:
+
+1. Checks if React DevTools is reachable on `ws://localhost:8097`
+2. Initializes the DevTools connection
+3. Connects your app to the DevTools server
+
+Here's what happens under the hood (from `src/devtools.ts`):
+
+```typescript
+import WebSocket from 'ws';
+import devtools from 'react-devtools-core';
+
+const isDevToolsReachable = async (): Promise<boolean> =>
+  new Promise(resolve => {
+    const socket = new WebSocket('ws://localhost:8097');
+    
+    const timeout = setTimeout(() => {
+      socket.terminate();
+      resolve(false);
+    }, 2000);
+    
+    socket.on('open', () => {
+      clearTimeout(timeout);
+      socket.terminate();
+      resolve(true);
+    });
+    
+    socket.on('error', () => {
+      clearTimeout(timeout);
+      socket.terminate();
+      resolve(false);
+    });
+  });
+
+if (await isDevToolsReachable()) {
+  devtools.initialize();
+  devtools.connectToDevTools();
+} else {
+  console.warn(
+    'DEV is set to true, but the React DevTools server is not running. Start it with:\n\n$ npx react-devtools\n'
+  );
+}
+```
+
+## Using DevTools
+
+### Inspecting Components
+
+Once connected, you can:
+
+- **Browse the component tree** - See all your components hierarchically
+- **View props and state** - Inspect current values of props and useState
+- **Examine hooks** - See all hooks used in each component
+- **Navigate the tree** - Click components to select and inspect them
+
+### Live Editing
+
+One of the most powerful features is the ability to modify your running application:
+
+```jsx
+import {render, Box, Text} from 'ink';
+import {useState} from 'react';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+  
+  return (
+    <Box>
+      <Text>Count: {count}</Text>
+    </Box>
+  );
+}
+
+render(<Counter />);
+```
+
+With DevTools:
+1. Select the `Counter` component
+2. Find the `count` state in the hooks section
+3. Double-click the value and change it
+4. See the change reflected immediately in your terminal
+
+<Tip>
+  You can inspect and modify props, state, and hooks in real-time without restarting your CLI application.
+</Tip>
+
+### Debugging Component Updates
+
+DevTools highlights components when they re-render, helping you:
+
+- Identify unnecessary re-renders
+- Debug performance issues
+- Understand your component's render cycle
+
+## Development Workflow
+
+### With npm scripts
+
+Add a dev script to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "dev": "DEV=true node cli.js",
+    "start": "node cli.js"
+  }
+}
+```
+
+Then run:
+
+```bash
+npm run dev
+```
+
+### With TypeScript
+
+If you're using TypeScript, the workflow is the same:
+
+```json
+{
+  "scripts": {
+    "dev": "DEV=true tsx cli.ts",
+    "build": "tsc",
+    "start": "node dist/cli.js"
+  }
+}
+```
+
+## Troubleshooting
+
+### DevTools Not Connecting
+
+If you see the warning:
+
+```
+DEV is set to true, but the React DevTools server is not running.
+```
+
+<Steps>
+  <Step title="Start DevTools first">
+    Make sure to start React DevTools before your Ink app:
+    
+    ```bash
+    npx react-devtools
+    ```
+  </Step>
+  
+  <Step title="Check the port">
+    Verify nothing else is using port 8097:
+    
+    ```bash
+    lsof -i :8097
+    ```
+  </Step>
+  
+  <Step title="Verify installation">
+    Ensure `react-devtools-core` is installed:
+    
+    ```bash
+    npm list react-devtools-core
+    ```
+  </Step>
+</Steps>
+
+### Connection Timeout
+
+Ink waits 2 seconds for DevTools to respond. If you have a slow system, you may need to:
+
+1. Start DevTools first
+2. Wait for it to fully load
+3. Then start your Ink app with `DEV=true`
+
+### Multiple Apps
+
+If you're running multiple Ink apps simultaneously:
+
+- DevTools will show all connected apps
+- Use the app selector dropdown to switch between them
+- Each app appears as a separate instance
+
+## Best Practices
+
+<Tip>
+  Only use DevTools in development. The `DEV` flag should never be set in production.
+</Tip>
+
+- **Development only**: Never enable DevTools in production builds
+- **Start order**: Launch DevTools before your app for instant connection
+- **Keep it running**: Leave DevTools open throughout your development session
+- **Component naming**: Use named functions for easier identification in DevTools
+
+```jsx
+// Good - shows as "Counter" in DevTools
+function Counter() {
+  return <Text>Count</Text>;
+}
+
+// Less helpful - shows as "Unknown"
+const Counter = () => <Text>Count</Text>;
+```
+
+## Exiting Your App
+
+<Note>
+  When using DevTools, you must manually quit your CLI via Ctrl+C. DevTools maintains a connection that keeps the process alive.
+</Note>
+
+Alternatively, you can call `exit()` from the `useApp` hook:
+
+```jsx
+import {useApp} from 'ink';
+
+function MyApp() {
+  const {exit} = useApp();
+  
+  // Exit after some condition
+  if (done) {
+    exit();
+  }
+  
+  return <Text>Running...</Text>;
+}
+```
+
+## Example: Debugging a Complex Component
+
+```jsx
+import {render, Box, Text} from 'ink';
+import {useState, useEffect} from 'react';
+
+function DebugExample() {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    // Simulate async data loading
+    setTimeout(() => {
+      setData(['Item 1', 'Item 2', 'Item 3']);
+      setLoading(false);
+    }, 1000);
+  }, []);
+  
+  return (
+    <Box flexDirection="column">
+      {loading ? (
+        <Text>Loading...</Text>
+      ) : (
+        data.map((item, index) => (
+          <Text key={index}>{item}</Text>
+        ))
+      )}
+    </Box>
+  );
+}
+
+render(<DebugExample />);
+```
+
+With DevTools, you can:
+- Watch the `loading` state change from `true` to `false`
+- See the `data` array populate
+- Inspect the effect dependencies
+- Manually modify `loading` to test different states
+
+## Related Resources
+
+- [React DevTools GitHub](https://github.com/facebook/react/tree/master/packages/react-devtools)
+- [Testing Guide](/guides/testing) - Learn how to test your components
+- [Screen Reader Support](/guides/screen-reader-support) - Make your CLI accessible

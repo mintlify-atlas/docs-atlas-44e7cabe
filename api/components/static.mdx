@@ -1,0 +1,165 @@
+---
+title: Static
+description: Permanently render output above everything else
+---
+
+`<Static>` component permanently renders its output above everything else. It's useful for displaying activity like completed tasks or logs—things that don't change after they're rendered (hence the name "Static").
+
+It's preferred to use `<Static>` for use cases like these when you can't know or control the number of items that need to be rendered.
+
+For example, [Tap](https://github.com/tapjs/node-tap) uses `<Static>` to display a list of completed tests. [Gatsby](https://github.com/gatsbyjs/gatsby) uses it to display a list of generated pages while still displaying a live progress bar.
+
+## Component Signature
+
+```tsx
+import {Static} from 'ink';
+
+function Component() {
+  const items = ['Item 1', 'Item 2', 'Item 3'];
+
+  return (
+    <Static items={items}>
+      {(item, index) => (
+        <Box key={index}>
+          <Text>{item}</Text>
+        </Box>
+      )}
+    </Static>
+  );
+}
+```
+
+## Props
+
+<ParamField path="items" type="T[]" required>
+  Array of items of any type to render using the function you pass as a component child.
+</ParamField>
+
+<ParamField path="style" type="Styles">
+  Styles to apply to a container of child elements. See `<Box>` for supported properties.
+</ParamField>
+
+<ParamField path="children" type="(item: T, index: number) => ReactNode" required>
+  Function that is called to render every item in the `items` array.
+  
+  The first argument is the item itself, and the second argument is the index of that item in the `items` array.
+  
+  **Note:** A `key` must be assigned to the root component.
+</ParamField>
+
+## Examples
+
+### Basic Static List
+
+```tsx
+import {useState} from 'react';
+import {Box, Static, Text} from 'ink';
+
+function TodoList() {
+  const [completedTasks, setCompletedTasks] = useState([
+    'Install dependencies',
+    'Build project',
+    'Run tests'
+  ]);
+
+  return (
+    <Box flexDirection="column">
+      <Static items={completedTasks}>
+        {(task, index) => (
+          <Box key={index}>
+            <Text color="green">✓ {task}</Text>
+          </Box>
+        )}
+      </Static>
+      <Text>Current task: Deploy to production</Text>
+    </Box>
+  );
+}
+```
+
+### Static Logs with Custom Styling
+
+```tsx
+import {useState, useEffect} from 'react';
+import {Box, Static, Text} from 'ink';
+
+function Logger() {
+  const [logs, setLogs] = useState([
+    {message: 'Server started', level: 'info'},
+    {message: 'Database connected', level: 'success'},
+    {message: 'Warning: High memory usage', level: 'warning'}
+  ]);
+
+  return (
+    <Static
+      items={logs}
+      style={{flexDirection: 'column', padding: 1}}
+    >
+      {(log, index) => {
+        const color = log.level === 'success' ? 'green' : 
+                     log.level === 'warning' ? 'yellow' : 'white';
+        
+        return (
+          <Box key={index}>
+            <Text color={color}>[{log.level.toUpperCase()}] {log.message}</Text>
+          </Box>
+        );
+      }}
+    </Static>
+  );
+}
+```
+
+### Progress Tracker
+
+```tsx
+import {useState, useEffect} from 'react';
+import {Box, Static, Text} from 'ink';
+
+function ProgressTracker() {
+  const [completed, setCompleted] = useState(['Step 1', 'Step 2']);
+  const [current, setCurrent] = useState('Step 3');
+
+  return (
+    <Box flexDirection="column">
+      <Static items={completed}>
+        {(step, index) => (
+          <Box key={index}>
+            <Text color="green">✓ {step} (completed)</Text>
+          </Box>
+        )}
+      </Static>
+      <Text color="yellow">⟳ {current} (in progress)</Text>
+    </Box>
+  );
+}
+```
+
+## Type Parameter
+
+The `<Static>` component is generic and accepts a type parameter for the items:
+
+```tsx
+type Task = {
+  id: string;
+  name: string;
+  completed: boolean;
+};
+
+function TaskList() {
+  const tasks: Task[] = [
+    {id: '1', name: 'Task 1', completed: true},
+    {id: '2', name: 'Task 2', completed: true}
+  ];
+
+  return (
+    <Static<Task> items={tasks}>
+      {(task, index) => (
+        <Box key={task.id}>
+          <Text>{task.name}</Text>
+        </Box>
+      )}
+    </Static>
+  );
+}
+```

@@ -1,0 +1,375 @@
+---
+title: BoxProps
+description: Props for the Box component
+---
+
+Props accepted by the `<Box>` component.
+
+## Type Definition
+
+```typescript
+type BoxProps = Except<Styles, 'textWrap'> & {
+  readonly 'aria-label'?: string;
+  readonly 'aria-hidden'?: boolean;
+  readonly 'aria-role'?:
+    | 'button'
+    | 'checkbox'
+    | 'combobox'
+    | 'list'
+    | 'listbox'
+    | 'listitem'
+    | 'menu'
+    | 'menuitem'
+    | 'option'
+    | 'progressbar'
+    | 'radio'
+    | 'radiogroup'
+    | 'tab'
+    | 'tablist'
+    | 'table'
+    | 'textbox'
+    | 'timer'
+    | 'toolbar';
+  readonly 'aria-state'?: {
+    readonly busy?: boolean;
+    readonly checked?: boolean;
+    readonly disabled?: boolean;
+    readonly expanded?: boolean;
+    readonly multiline?: boolean;
+    readonly multiselectable?: boolean;
+    readonly readonly?: boolean;
+    readonly required?: boolean;
+    readonly selected?: boolean;
+  };
+};
+```
+
+## Accessibility Properties
+
+<ResponseField name="aria-label" type="string">
+  A label for the element for screen readers.
+</ResponseField>
+
+<ResponseField name="aria-hidden" type="boolean">
+  Hide the element from screen readers.
+</ResponseField>
+
+<ResponseField name="aria-role" type="string">
+  The role of the element. Possible values:
+  - `button`
+  - `checkbox`
+  - `combobox`
+  - `list`
+  - `listbox`
+  - `listitem`
+  - `menu`
+  - `menuitem`
+  - `option`
+  - `progressbar`
+  - `radio`
+  - `radiogroup`
+  - `tab`
+  - `tablist`
+  - `table`
+  - `textbox`
+  - `timer`
+  - `toolbar`
+</ResponseField>
+
+<ResponseField name="aria-state" type="object">
+  The state of the element.
+  
+  <Expandable title="properties">
+    <ResponseField name="busy" type="boolean">
+      Indicates if the element is busy.
+    </ResponseField>
+    
+    <ResponseField name="checked" type="boolean">
+      Indicates if the element is checked.
+    </ResponseField>
+    
+    <ResponseField name="disabled" type="boolean">
+      Indicates if the element is disabled.
+    </ResponseField>
+    
+    <ResponseField name="expanded" type="boolean">
+      Indicates if the element is expanded.
+    </ResponseField>
+    
+    <ResponseField name="multiline" type="boolean">
+      Indicates if the element supports multiple lines.
+    </ResponseField>
+    
+    <ResponseField name="multiselectable" type="boolean">
+      Indicates if the element supports multiple selections.
+    </ResponseField>
+    
+    <ResponseField name="readonly" type="boolean">
+      Indicates if the element is read-only.
+    </ResponseField>
+    
+    <ResponseField name="required" type="boolean">
+      Indicates if the element is required.
+    </ResponseField>
+    
+    <ResponseField name="selected" type="boolean">
+      Indicates if the element is selected.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Layout Properties (from Styles)
+
+BoxProps inherits all properties from the Styles type (defined in `src/styles.ts`) except `textWrap`.
+
+### Position
+
+<ResponseField name="position" type="'absolute' | 'relative' | 'static'">
+  Controls how the element is positioned. When `position` is `static`, `top`, `right`, `bottom`, and `left` are ignored.
+</ResponseField>
+
+<ResponseField name="top" type="number | string">
+  Top offset for positioned elements.
+</ResponseField>
+
+<ResponseField name="right" type="number | string">
+  Right offset for positioned elements.
+</ResponseField>
+
+<ResponseField name="bottom" type="number | string">
+  Bottom offset for positioned elements.
+</ResponseField>
+
+<ResponseField name="left" type="number | string">
+  Left offset for positioned elements.
+</ResponseField>
+
+### Gap
+
+<ResponseField name="columnGap" type="number">
+  Size of the gap between an element's columns.
+</ResponseField>
+
+<ResponseField name="rowGap" type="number">
+  Size of the gap between an element's rows.
+</ResponseField>
+
+<ResponseField name="gap" type="number">
+  Size of the gap between an element's columns and rows. A shorthand for `columnGap` and `rowGap`.
+</ResponseField>
+
+### Margin
+
+<ResponseField name="margin" type="number">
+  Margin on all sides. Equivalent to setting `marginTop`, `marginBottom`, `marginLeft`, and `marginRight`.
+</ResponseField>
+
+<ResponseField name="marginX" type="number">
+  Horizontal margin. Equivalent to setting `marginLeft` and `marginRight`.
+</ResponseField>
+
+<ResponseField name="marginY" type="number">
+  Vertical margin. Equivalent to setting `marginTop` and `marginBottom`.
+</ResponseField>
+
+<ResponseField name="marginTop" type="number">
+  Top margin.
+</ResponseField>
+
+<ResponseField name="marginBottom" type="number">
+  Bottom margin.
+</ResponseField>
+
+<ResponseField name="marginLeft" type="number">
+  Left margin.
+</ResponseField>
+
+<ResponseField name="marginRight" type="number">
+  Right margin.
+</ResponseField>
+
+### Padding
+
+<ResponseField name="padding" type="number">
+  Padding on all sides. Equivalent to setting `paddingTop`, `paddingBottom`, `paddingLeft`, and `paddingRight`.
+</ResponseField>
+
+<ResponseField name="paddingX" type="number">
+  Horizontal padding. Equivalent to setting `paddingLeft` and `paddingRight`.
+</ResponseField>
+
+<ResponseField name="paddingY" type="number">
+  Vertical padding. Equivalent to setting `paddingTop` and `paddingBottom`.
+</ResponseField>
+
+<ResponseField name="paddingTop" type="number">
+  Top padding.
+</ResponseField>
+
+<ResponseField name="paddingBottom" type="number">
+  Bottom padding.
+</ResponseField>
+
+<ResponseField name="paddingLeft" type="number">
+  Left padding.
+</ResponseField>
+
+<ResponseField name="paddingRight" type="number">
+  Right padding.
+</ResponseField>
+
+### Flexbox
+
+<ResponseField name="flexGrow" type="number">
+  This property defines the ability for a flex item to grow if necessary. See [flex-grow](https://css-tricks.com/almanac/properties/f/flex-grow/).
+</ResponseField>
+
+<ResponseField name="flexShrink" type="number">
+  It specifies the "flex shrink factor", which determines how much the flex item will shrink relative to the rest of the flex items in the flex container when there isn't enough space on the row. See [flex-shrink](https://css-tricks.com/almanac/properties/f/flex-shrink/).
+</ResponseField>
+
+<ResponseField name="flexDirection" type="'row' | 'column' | 'row-reverse' | 'column-reverse'">
+  It establishes the main-axis, thus defining the direction flex items are placed in the flex container. See [flex-direction](https://css-tricks.com/almanac/properties/f/flex-direction/).
+</ResponseField>
+
+<ResponseField name="flexBasis" type="number | string">
+  It specifies the initial size of the flex item, before any available space is distributed according to the flex factors. See [flex-basis](https://css-tricks.com/almanac/properties/f/flex-basis/).
+</ResponseField>
+
+<ResponseField name="flexWrap" type="'nowrap' | 'wrap' | 'wrap-reverse'">
+  It defines whether the flex items are forced in a single line or can be flowed into multiple lines. If set to multiple lines, it also defines the cross-axis which determines the direction new lines are stacked in. See [flex-wrap](https://css-tricks.com/almanac/properties/f/flex-wrap/).
+</ResponseField>
+
+<ResponseField name="alignItems" type="'flex-start' | 'center' | 'flex-end' | 'stretch' | 'baseline'">
+  The align-items property defines the default behavior for how items are laid out along the cross axis (perpendicular to the main axis). See [align-items](https://css-tricks.com/almanac/properties/a/align-items/).
+</ResponseField>
+
+<ResponseField name="alignSelf" type="'flex-start' | 'center' | 'flex-end' | 'auto' | 'stretch' | 'baseline'">
+  It makes possible to override the align-items value for specific flex items. See [align-self](https://css-tricks.com/almanac/properties/a/align-self/).
+</ResponseField>
+
+<ResponseField name="alignContent" type="'flex-start' | 'flex-end' | 'center' | 'stretch' | 'space-between' | 'space-around' | 'space-evenly'">
+  It defines the alignment along the cross axis when there are multiple lines of flex items (when using flex-wrap). See [align-content](https://css-tricks.com/almanac/properties/a/align-content/).
+</ResponseField>
+
+<ResponseField name="justifyContent" type="'flex-start' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly' | 'center'">
+  It defines the alignment along the main axis. See [justify-content](https://css-tricks.com/almanac/properties/j/justify-content/).
+</ResponseField>
+
+### Dimensions
+
+<ResponseField name="width" type="number | string">
+  Width of the element in spaces. You can also set it as a percentage, which will calculate the width based on the width of the parent element.
+</ResponseField>
+
+<ResponseField name="height" type="number | string">
+  Height of the element in lines (rows). You can also set it as a percentage, which will calculate the height based on the height of the parent element.
+</ResponseField>
+
+<ResponseField name="minWidth" type="number | string">
+  Sets a minimum width of the element. Percentages aren't supported yet; see https://github.com/facebook/yoga/issues/872.
+</ResponseField>
+
+<ResponseField name="minHeight" type="number | string">
+  Sets a minimum height of the element in lines (rows). You can also set it as a percentage, which will calculate the minimum height based on the height of the parent element.
+</ResponseField>
+
+<ResponseField name="maxWidth" type="number | string">
+  Sets a maximum width of the element. Percentages aren't supported yet; see https://github.com/facebook/yoga/issues/872.
+</ResponseField>
+
+<ResponseField name="maxHeight" type="number | string">
+  Sets a maximum height of the element in lines (rows). You can also set it as a percentage, which will calculate the maximum height based on the height of the parent element.
+</ResponseField>
+
+<ResponseField name="aspectRatio" type="number">
+  Defines the aspect ratio (width/height) for the element. Use it with at least one size constraint (`width`, `height`, `minHeight`, or `maxHeight`) so Ink can derive the missing dimension.
+</ResponseField>
+
+### Display
+
+<ResponseField name="display" type="'flex' | 'none'">
+  Set this property to `none` to hide the element.
+</ResponseField>
+
+### Border
+
+<ResponseField name="borderStyle" type="keyof Boxes | BoxStyle">
+  Add a border with a specified style. If `borderStyle` is `undefined` (the default), no border will be added.
+</ResponseField>
+
+<ResponseField name="borderTop" type="boolean" default="true">
+  Determines whether the top border is visible.
+</ResponseField>
+
+<ResponseField name="borderBottom" type="boolean" default="true">
+  Determines whether the bottom border is visible.
+</ResponseField>
+
+<ResponseField name="borderLeft" type="boolean" default="true">
+  Determines whether the left border is visible.
+</ResponseField>
+
+<ResponseField name="borderRight" type="boolean" default="true">
+  Determines whether the right border is visible.
+</ResponseField>
+
+<ResponseField name="borderColor" type="string">
+  Change border color. A shorthand for setting `borderTopColor`, `borderRightColor`, `borderBottomColor`, and `borderLeftColor`.
+</ResponseField>
+
+<ResponseField name="borderTopColor" type="string">
+  Change the top border color. Accepts the same values as `color` in `Text` component.
+</ResponseField>
+
+<ResponseField name="borderBottomColor" type="string">
+  Change the bottom border color. Accepts the same values as `color` in `Text` component.
+</ResponseField>
+
+<ResponseField name="borderLeftColor" type="string">
+  Change the left border color. Accepts the same values as `color` in `Text` component.
+</ResponseField>
+
+<ResponseField name="borderRightColor" type="string">
+  Change the right border color. Accepts the same values as `color` in `Text` component.
+</ResponseField>
+
+<ResponseField name="borderDimColor" type="boolean" default="false">
+  Dim the border color. A shorthand for setting `borderTopDimColor`, `borderBottomDimColor`, `borderLeftDimColor`, and `borderRightDimColor`.
+</ResponseField>
+
+<ResponseField name="borderTopDimColor" type="boolean" default="false">
+  Dim the top border color.
+</ResponseField>
+
+<ResponseField name="borderBottomDimColor" type="boolean" default="false">
+  Dim the bottom border color.
+</ResponseField>
+
+<ResponseField name="borderLeftDimColor" type="boolean" default="false">
+  Dim the left border color.
+</ResponseField>
+
+<ResponseField name="borderRightDimColor" type="boolean" default="false">
+  Dim the right border color.
+</ResponseField>
+
+### Overflow
+
+<ResponseField name="overflow" type="'visible' | 'hidden'" default="visible">
+  Behavior for an element's overflow in both directions.
+</ResponseField>
+
+<ResponseField name="overflowX" type="'visible' | 'hidden'" default="visible">
+  Behavior for an element's overflow in the horizontal direction.
+</ResponseField>
+
+<ResponseField name="overflowY" type="'visible' | 'hidden'" default="visible">
+  Behavior for an element's overflow in the vertical direction.
+</ResponseField>
+
+### Background
+
+<ResponseField name="backgroundColor" type="string">
+  Background color for the element. Accepts the same values as `color` in the `<Text>` component.
+</ResponseField>

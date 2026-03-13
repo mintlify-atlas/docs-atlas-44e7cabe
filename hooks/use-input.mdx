@@ -1,0 +1,286 @@
+---
+title: 'useInput'
+description: 'Handle keyboard input from users in your CLI application'
+---
+
+`useInput` is a React hook that handles user keyboard input. It's a convenient alternative to manually listening for data events on stdin. The hook calls your handler for each input event, providing both the raw input and parsed key information.
+
+## Import
+
+```jsx
+import {useInput} from 'ink';
+```
+
+## Signature
+
+```typescript
+useInput(
+  inputHandler: (input: string, key: Key) => void,
+  options?: {isActive?: boolean}
+): void
+```
+
+## Parameters
+
+<ParamField path="inputHandler" type="function" required>
+  Callback function invoked when the user types or presses a key.
+  
+  <Expandable title="Handler parameters">
+    <ParamField path="input" type="string">
+      The input string received. For printable characters, this is the character itself. For special keys (arrows, etc.), this is an empty string unless combined with Ctrl.
+    </ParamField>
+    
+    <ParamField path="key" type="Key">
+      Object containing boolean flags for special keys and modifiers.
+      
+      <Expandable title="Key properties">
+        <ResponseField name="upArrow" type="boolean">
+          Up arrow key was pressed
+        </ResponseField>
+        <ResponseField name="downArrow" type="boolean">
+          Down arrow key was pressed
+        </ResponseField>
+        <ResponseField name="leftArrow" type="boolean">
+          Left arrow key was pressed
+        </ResponseField>
+        <ResponseField name="rightArrow" type="boolean">
+          Right arrow key was pressed
+        </ResponseField>
+        <ResponseField name="return" type="boolean">
+          Return (Enter) key was pressed
+        </ResponseField>
+        <ResponseField name="escape" type="boolean">
+          Escape key was pressed
+        </ResponseField>
+        <ResponseField name="ctrl" type="boolean">
+          Ctrl modifier key was held
+        </ResponseField>
+        <ResponseField name="shift" type="boolean">
+          Shift modifier key was held
+        </ResponseField>
+        <ResponseField name="tab" type="boolean">
+          Tab key was pressed
+        </ResponseField>
+        <ResponseField name="backspace" type="boolean">
+          Backspace key was pressed
+        </ResponseField>
+        <ResponseField name="delete" type="boolean">
+          Delete key was pressed
+        </ResponseField>
+        <ResponseField name="pageDown" type="boolean">
+          Page Down key was pressed
+        </ResponseField>
+        <ResponseField name="pageUp" type="boolean">
+          Page Up key was pressed
+        </ResponseField>
+        <ResponseField name="home" type="boolean">
+          Home key was pressed
+        </ResponseField>
+        <ResponseField name="end" type="boolean">
+          End key was pressed
+        </ResponseField>
+        <ResponseField name="meta" type="boolean">
+          Meta key (Alt/Option) was pressed
+        </ResponseField>
+        <ResponseField name="super" type="boolean">
+          Super key (Cmd on macOS, Win on Windows) was pressed. Requires kitty keyboard protocol.
+        </ResponseField>
+        <ResponseField name="hyper" type="boolean">
+          Hyper key was pressed. Requires kitty keyboard protocol.
+        </ResponseField>
+        <ResponseField name="capsLock" type="boolean">
+          Caps Lock was active. Requires kitty keyboard protocol.
+        </ResponseField>
+        <ResponseField name="numLock" type="boolean">
+          Num Lock was active. Requires kitty keyboard protocol.
+        </ResponseField>
+        <ResponseField name="eventType" type="'press' | 'repeat' | 'release' | undefined">
+          The type of key event. Only available with kitty keyboard protocol.
+        </ResponseField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="options" type="object">
+  <Expandable title="properties">
+    <ParamField path="isActive" type="boolean" default="true">
+      Enable or disable capturing of user input. Useful when there are multiple `useInput` hooks to avoid handling the same input multiple times.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Return Value
+
+`void` - This hook doesn't return anything.
+
+## Examples
+
+### Basic Input Handling
+
+Handle simple keyboard shortcuts:
+
+```jsx
+import {useInput, useApp, Text} from 'ink';
+
+const App = () => {
+  const {exit} = useApp();
+
+  useInput((input, key) => {
+    if (input === 'q') {
+      exit();
+    }
+  });
+
+  return <Text>Press 'q' to quit</Text>;
+};
+```
+
+### Arrow Key Navigation
+
+Move an element around the screen using arrow keys:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useInput, useApp} from 'ink';
+
+const Robot = () => {
+  const {exit} = useApp();
+  const [x, setX] = useState(1);
+  const [y, setY] = useState(1);
+
+  useInput((input, key) => {
+    if (input === 'q') {
+      exit();
+    }
+
+    if (key.leftArrow) {
+      setX(Math.max(1, x - 1));
+    }
+
+    if (key.rightArrow) {
+      setX(Math.min(20, x + 1));
+    }
+
+    if (key.upArrow) {
+      setY(Math.max(1, y - 1));
+    }
+
+    if (key.downArrow) {
+      setY(Math.min(10, y + 1));
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text>Use arrow keys to move the face. Press "q" to exit.</Text>
+      <Box height={12} paddingLeft={x} paddingTop={y}>
+        <Text>^_^</Text>
+      </Box>
+    </Box>
+  );
+};
+```
+
+### Text Input Field
+
+Build a simple text input component:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useInput} from 'ink';
+
+const TextInput = ({onSubmit}) => {
+  const [value, setValue] = useState('');
+
+  useInput((input, key) => {
+    if (key.return) {
+      onSubmit(value);
+      setValue('');
+    } else if (key.backspace) {
+      setValue(value.slice(0, -1));
+    } else if (!key.ctrl && !key.meta && input) {
+      setValue(value + input);
+    }
+  });
+
+  return (
+    <Box>
+      <Text>Input: {value}</Text>
+    </Box>
+  );
+};
+```
+
+### Conditional Input Handling
+
+Use the `isActive` option to control when input is captured:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useInput} from 'ink';
+
+const Modal = ({isOpen, onClose}) => {
+  useInput((input) => {
+    if (input === 'q') {
+      onClose();
+    }
+  }, {isActive: isOpen});
+
+  if (!isOpen) return null;
+
+  return (
+    <Box borderStyle="round" padding={1}>
+      <Text>Modal is open. Press 'q' to close.</Text>
+    </Box>
+  );
+};
+```
+
+### Ctrl Key Combinations
+
+Detect Ctrl+key combinations:
+
+```jsx
+import {useInput, Text} from 'ink';
+
+const App = () => {
+  useInput((input, key) => {
+    if (key.ctrl) {
+      switch (input) {
+        case 's':
+          console.log('Save');
+          break;
+        case 'o':
+          console.log('Open');
+          break;
+        case 'n':
+          console.log('New');
+          break;
+      }
+    }
+  });
+
+  return <Text>Try Ctrl+S, Ctrl+O, or Ctrl+N</Text>;
+};
+```
+
+## Notes
+
+<Note>
+  If the user pastes text and it's more than one character, the callback will be called only once with the entire pasted string as `input`. For better paste handling, consider using [`usePaste`](/hooks/use-paste) alongside `useInput`.
+</Note>
+
+<Note>
+  When `useInput` is active, the terminal is automatically set to raw mode. This is restored when the component unmounts.
+</Note>
+
+<Warning>
+  If your app has `exitOnCtrlC` enabled (the default), pressing Ctrl+C will exit the app before your `useInput` handler is called.
+</Warning>
+
+## Related Hooks
+
+- [usePaste](/hooks/use-paste) - Handle pasted text separately from keyboard input
+- [useFocus](/hooks/use-focus) - Combine with focus management for multi-input UIs
+- [useApp](/hooks/use-app) - Exit the app from within input handlers

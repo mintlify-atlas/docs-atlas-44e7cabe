@@ -1,80 +1,360 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Build your first Ink CLI application in minutes
 ---
 
-## Get started in three steps
+# Quickstart Guide
 
-Get your documentation site running locally and make your first customization.
+This guide will walk you through creating your first interactive CLI application with Ink. You'll build a simple counter that displays tests passed, and then an interactive app that responds to keyboard input.
 
-### Step 1: Set up your local environment
+## Prerequisites
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+Make sure you have [Ink installed](/installation) in your project before continuing.
 
-### Step 2: Deploy your changes
+## Your First Ink App
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+Let's start with a simple example - a counter that updates every 100ms. This example is taken directly from the Ink repository.
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+<Steps>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+<Step title="Create your application file">
+  Create a new file called `counter.jsx`:
 
-### Step 3: Go live
+  ```jsx counter.jsx
+  import React, {useState, useEffect} from 'react';
+  import {render, Text} from 'ink';
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+  const Counter = () => {
+    const [counter, setCounter] = useState(0);
 
-## Next steps
+    useEffect(() => {
+      const timer = setInterval(() => {
+        setCounter(previousCounter => previousCounter + 1);
+      }, 100);
 
-Now that you have your docs running, explore these key features:
+      return () => {
+        clearInterval(timer);
+      };
+    }, []);
+
+    return <Text color="green">{counter} tests passed</Text>;
+  };
+
+  render(<Counter />);
+  ```
+
+  <Note>
+    This example uses familiar React patterns: `useState` for state management and `useEffect` for side effects.
+  </Note>
+</Step>
+
+<Step title="Run your application">
+  Execute your Ink app with Node.js:
+
+  ```bash
+  node counter.jsx
+  ```
+
+  You'll see a green counter that increments every 100ms, showing the number of tests passed.
+
+  <Tip>
+    Press **Ctrl+C** to exit the application at any time.
+  </Tip>
+</Step>
+
+<Step title="Understand the code">
+  Let's break down what's happening:
+
+  - **`useState(0)`** - Creates state to track the counter value
+  - **`useEffect(() => {...}, [])`** - Sets up a timer when the component mounts
+  - **`setInterval`** - Updates the counter every 100ms
+  - **`<Text color="green">`** - Renders colored text to the terminal
+  - **`render(<Counter />)`** - Mounts the React component to the terminal
+
+  The cleanup function returned from `useEffect` ensures the timer is cleared when the component unmounts.
+</Step>
+
+</Steps>
+
+## Building an Interactive CLI
+
+Now let's create something more interactive - a robot face you can move with arrow keys.
+
+<Steps>
+
+<Step title="Create an interactive app">
+  Create a new file called `robot.jsx`:
+
+  ```jsx robot.jsx
+  import React, {useState} from 'react';
+  import {render, useInput, useApp, Box, Text} from 'ink';
+
+  const Robot = () => {
+    const {exit} = useApp();
+    const [x, setX] = useState(1);
+    const [y, setY] = useState(1);
+
+    useInput((input, key) => {
+      if (input === 'q') {
+        exit();
+      }
+
+      if (key.leftArrow) {
+        setX(Math.max(1, x - 1));
+      }
+
+      if (key.rightArrow) {
+        setX(Math.min(20, x + 1));
+      }
+
+      if (key.upArrow) {
+        setY(Math.max(1, y - 1));
+      }
+
+      if (key.downArrow) {
+        setY(Math.min(10, y + 1));
+      }
+    });
+
+    return (
+      <Box flexDirection="column">
+        <Text>Use arrow keys to move the face. Press "q" to exit.</Text>
+        <Box height={12} paddingLeft={x} paddingTop={y}>
+          <Text>^_^</Text>
+        </Box>
+      </Box>
+    );
+  };
+
+  render(<Robot />);
+  ```
+
+  <Note>
+    This example introduces new Ink concepts: `useInput` for keyboard handling, `useApp` for app lifecycle control, and `Box` for layout.
+  </Note>
+</Step>
+
+<Step title="Run the interactive app">
+  ```bash
+  node robot.jsx
+  ```
+
+  Try it out:
+  - Use **arrow keys** to move the robot face around
+  - Press **q** to quit the application
+
+  The robot face (`^_^`) will move within a bounded area as you press the arrow keys.
+</Step>
+
+<Step title="Learn the new concepts">
+  This example introduces several important Ink concepts:
+
+  **`useInput()`** - A hook that handles keyboard input:
+  ```jsx
+  useInput((input, key) => {
+    // input: the character typed
+    // key: object with boolean flags for special keys
+    if (input === 'q') {
+      // Handle regular key press
+    }
+    if (key.leftArrow) {
+      // Handle arrow keys
+    }
+  });
+  ```
+
+  **`useApp()`** - Provides app lifecycle methods:
+  ```jsx
+  const {exit} = useApp();
+  exit(); // Cleanly exit the application
+  ```
+
+  **`<Box>`** - Layout component with Flexbox properties:
+  ```jsx
+  <Box flexDirection="column" paddingLeft={2} paddingTop={1}>
+    {/* Content */}
+  </Box>
+  ```
+</Step>
+
+</Steps>
+
+## Using Layouts with Flexbox
+
+Ink uses Yoga, a Flexbox layout engine, so you can use CSS-like properties for layouts.
+
+<Steps>
+
+<Step title="Create a layout example">
+  ```jsx layout.jsx
+  import React from 'react';
+  import {render, Box, Text} from 'ink';
+
+  const Layout = () => (
+    <Box flexDirection="column" padding={1}>
+      <Box borderStyle="round" borderColor="cyan" padding={1}>
+        <Text bold>Header Section</Text>
+      </Box>
+      
+      <Box marginTop={1} gap={2}>
+        <Box borderStyle="single" padding={1} flexGrow={1}>
+          <Text>Left Panel</Text>
+        </Box>
+        <Box borderStyle="single" padding={1} flexGrow={2}>
+          <Text>Right Panel (2x wider)</Text>
+        </Box>
+      </Box>
+    </Box>
+  );
+
+  render(<Layout />);
+  ```
+
+  <Tip>
+    Think of every `<Box>` as having `display: flex` in CSS. Use Flexbox properties like `flexDirection`, `justifyContent`, `alignItems`, and `flexGrow`.
+  </Tip>
+</Step>
+
+<Step title="Run the layout example">
+  ```bash
+  node layout.jsx
+  ```
+
+  You'll see a structured layout with borders, demonstrating how Flexbox works in the terminal.
+</Step>
+
+</Steps>
+
+## Key Concepts Recap
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Components" icon="cube">
+    `<Text>` for text content and `<Box>` for layout containers
+  </Card>
+  
+  <Card title="Hooks" icon="hook">
+    `useInput` for keyboard input, `useApp` for lifecycle, plus all React hooks
+  </Card>
+  
+  <Card title="Flexbox Layouts" icon="layout-grid">
+    Use familiar CSS Flexbox properties on `<Box>` components
+  </Card>
+  
+  <Card title="Rendering" icon="sparkles">
+    `render()` mounts your React component to the terminal
+  </Card>
 </CardGroup>
 
+## Common Patterns
+
+### Displaying Static Lists
+
+Use the `<Static>` component for content that doesn't change after rendering:
+
+```jsx
+import React, {useState, useEffect} from 'react';
+import {Box, Text, render, Static} from 'ink';
+
+const TestRunner = () => {
+  const [tests, setTests] = useState([]);
+
+  useEffect(() => {
+    let completedTests = 0;
+    let timer;
+
+    const run = () => {
+      if (completedTests++ < 10) {
+        setTests(previousTests => [
+          ...previousTests,
+          {
+            id: previousTests.length,
+            title: `Test #${previousTests.length + 1}`
+          }
+        ]);
+        timer = setTimeout(run, 100);
+      }
+    };
+
+    run();
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <>
+      <Static items={tests}>
+        {test => (
+          <Box key={test.id}>
+            <Text color="green">✔ {test.title}</Text>
+          </Box>
+        )}
+      </Static>
+
+      <Box marginTop={1}>
+        <Text dimColor>Completed tests: {tests.length}</Text>
+      </Box>
+    </>
+  );
+};
+
+render(<TestRunner />);
+```
+
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  `<Static>` is perfect for logs, completed tasks, or any output that accumulates over time. New items appear above the live-updating content.
 </Note>
+
+### Handling User Input
+
+Build interactive menus and forms with `useInput`:
+
+```jsx
+const Menu = () => {
+  const [selected, setSelected] = useState(0);
+  const items = ['Option 1', 'Option 2', 'Option 3'];
+
+  useInput((input, key) => {
+    if (key.upArrow) {
+      setSelected(Math.max(0, selected - 1));
+    }
+    if (key.downArrow) {
+      setSelected(Math.min(items.length - 1, selected + 1));
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      {items.map((item, index) => (
+        <Text key={item} color={index === selected ? 'blue' : 'white'}>
+          {index === selected ? '> ' : '  '}{item}
+        </Text>
+      ))}
+    </Box>
+  );
+};
+```
+
+## Next Steps
+
+Now that you've built your first Ink applications, explore the core components and hooks:
+
+<CardGroup cols={2}>
+  <Card title="Components" icon="cube" href="/components/text">
+    Learn about Text, Box, Static, and other built-in components
+  </Card>
+  
+  <Card title="Hooks" icon="hook" href="/hooks/use-input">
+    Master useInput, useApp, useFocus, and other Ink hooks
+  </Card>
+  
+  <Card title="Layouts" icon="layout-grid" href="/concepts/flexbox-layouts">
+    Deep dive into Flexbox layouts in the terminal
+  </Card>
+  
+  <Card title="Examples" icon="code" href="/examples">
+    Explore real-world examples from the Ink repository
+  </Card>
+</CardGroup>
+
+<Tip>
+  Check out the [examples directory](https://github.com/vadimdemedes/ink/tree/master/examples) in the Ink repository for more complete examples including testing, routing, and advanced patterns.
+</Tip>

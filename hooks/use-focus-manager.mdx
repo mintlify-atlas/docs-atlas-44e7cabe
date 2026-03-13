@@ -1,0 +1,398 @@
+---
+title: 'useFocusManager'
+description: 'Manage focus globally across all focusable components'
+---
+
+`useFocusManager` is a React hook that provides methods to control focus management across your entire application. Use it to enable/disable focus, navigate between focusable components, or access the currently focused component ID.
+
+## Import
+
+```jsx
+import {useFocusManager} from 'ink';
+```
+
+## Signature
+
+```typescript
+useFocusManager(): {
+  enableFocus: () => void;
+  disableFocus: () => void;
+  focusNext: () => void;
+  focusPrevious: () => void;
+  focus: (id: string) => void;
+  activeId: string | undefined;
+}
+```
+
+## Return Value
+
+<ResponseField name="enableFocus" type="function">
+  Enable focus management for all components. You don't need to call this manually unless you've previously disabled focus. Focus management is enabled by default.
+</ResponseField>
+
+<ResponseField name="disableFocus" type="function">
+  Disable focus management for all components. The currently focused component (if any) will lose its focus.
+</ResponseField>
+
+<ResponseField name="focusNext" type="function">
+  Switch focus to the next focusable component. If no component is focused, focus will be given to the first focusable component. If the last component is focused, wraps to the first.
+</ResponseField>
+
+<ResponseField name="focusPrevious" type="function">
+  Switch focus to the previous focusable component. If no component is focused, focus will be given to the first focusable component. If the first component is focused, wraps to the last.
+</ResponseField>
+
+<ResponseField name="focus" type="function">
+  Switch focus to a specific component by its ID. If no component with that ID exists, focus is not changed.
+  
+  <Expandable title="Parameters">
+    <ParamField path="id" type="string">
+      The ID of the component to focus (set via `useFocus({id: '...'})`)
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="activeId" type="string | undefined">
+  The ID of the currently focused component, or `undefined` if no component is focused.
+</ResponseField>
+
+## Examples
+
+### Display Active Focus
+
+Show which component is currently focused:
+
+```jsx
+import {Box, Text, useFocusManager, useFocus} from 'ink';
+
+const Item = ({id, label}) => {
+  const {isFocused} = useFocus({id});
+  return <Text color={isFocused ? 'cyan' : 'white'}>{label}</Text>;
+};
+
+const App = () => {
+  const {activeId} = useFocusManager();
+
+  return (
+    <Box flexDirection="column">
+      <Text>Currently focused: {activeId ?? 'none'}</Text>
+      <Item id="first" label="First" />
+      <Item id="second" label="Second" />
+      <Item id="third" label="Third" />
+    </Box>
+  );
+};
+```
+
+### Custom Navigation
+
+Implement custom focus navigation with arrow keys:
+
+```jsx
+import {Box, Text, useInput, useFocusManager, useFocus} from 'ink';
+
+const Item = ({label}) => {
+  const {isFocused} = useFocus();
+  return (
+    <Text color={isFocused ? 'green' : 'white'}>
+      {isFocused ? '→ ' : '  '}{label}
+    </Text>
+  );
+};
+
+const App = () => {
+  const {focusNext, focusPrevious} = useFocusManager();
+
+  useInput((input, key) => {
+    if (key.downArrow) {
+      focusNext();
+    } else if (key.upArrow) {
+      focusPrevious();
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text dimColor>Use arrow keys to navigate</Text>
+      <Item label="First" />
+      <Item label="Second" />
+      <Item label="Third" />
+    </Box>
+  );
+};
+```
+
+### Disable Focus Temporarily
+
+Disable focus during a loading state:
+
+```jsx
+import {useState, useEffect} from 'react';
+import {Box, Text, useFocusManager, useFocus} from 'ink';
+
+const Item = ({label}) => {
+  const {isFocused} = useFocus();
+  return <Text color={isFocused ? 'cyan' : 'white'}>{label}</Text>;
+};
+
+const App = () => {
+  const [loading, setLoading] = useState(true);
+  const {enableFocus, disableFocus} = useFocusManager();
+
+  useEffect(() => {
+    if (loading) {
+      disableFocus();
+    } else {
+      enableFocus();
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    setTimeout(() => setLoading(false), 2000);
+  }, []);
+
+  return (
+    <Box flexDirection="column">
+      {loading ? (
+        <Text>Loading...</Text>
+      ) : (
+        <>
+          <Text>Ready! Use Tab to navigate</Text>
+          <Item label="First" />
+          <Item label="Second" />
+        </>
+      )}
+    </Box>
+  );
+};
+```
+
+### Jump to Specific Item
+
+Focus a specific component by ID:
+
+```jsx
+import {Box, Text, useInput, useFocusManager, useFocus} from 'ink';
+
+const MenuItem = ({id, label, shortcut}) => {
+  const {isFocused} = useFocus({id});
+
+  return (
+    <Text color={isFocused ? 'cyan' : 'white'}>
+      {isFocused ? '❯ ' : '  '}
+      [{shortcut}] {label}
+    </Text>
+  );
+};
+
+const Menu = () => {
+  const {focus} = useFocusManager();
+
+  useInput((input) => {
+    // Jump to menu items with number keys
+    const shortcuts = {
+      '1': 'home',
+      '2': 'settings',
+      '3': 'about',
+      '4': 'exit'
+    };
+
+    if (shortcuts[input]) {
+      focus(shortcuts[input]);
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text bold>Main Menu</Text>
+      <Text dimColor>Press number keys or Tab to navigate</Text>
+      <MenuItem id="home" label="Home" shortcut="1" />
+      <MenuItem id="settings" label="Settings" shortcut="2" />
+      <MenuItem id="about" label="About" shortcut="3" />
+      <MenuItem id="exit" label="Exit" shortcut="4" />
+    </Box>
+  );
+};
+```
+
+### Focus Breadcrumbs
+
+Show the path to the focused component:
+
+```jsx
+import {Box, Text, useFocusManager, useFocus} from 'ink';
+
+const Section = ({title, children}) => (
+  <Box flexDirection="column" marginBottom={1}>
+    <Text bold dimColor>{title}</Text>
+    {children}
+  </Box>
+);
+
+const Item = ({id, section, label}) => {
+  const {isFocused} = useFocus({id});
+  return (
+    <Text color={isFocused ? 'green' : 'white'}>
+      {isFocused ? '● ' : '○ '}{label}
+    </Text>
+  );
+};
+
+const App = () => {
+  const {activeId} = useFocusManager();
+
+  const items = {
+    'file-new': {section: 'File', label: 'New'},
+    'file-open': {section: 'File', label: 'Open'},
+    'edit-cut': {section: 'Edit', label: 'Cut'},
+    'edit-copy': {section: 'Edit', label: 'Copy'},
+  };
+
+  const active = activeId ? items[activeId] : null;
+
+  return (
+    <Box flexDirection="column">
+      <Box marginBottom={1}>
+        <Text>
+          Focus: {active ? `${active.section} > ${active.label}` : 'None'}
+        </Text>
+      </Box>
+
+      <Section title="File">
+        <Item id="file-new" section="File" label="New" />
+        <Item id="file-open" section="File" label="Open" />
+      </Section>
+
+      <Section title="Edit">
+        <Item id="edit-cut" section="Edit" label="Cut" />
+        <Item id="edit-copy" section="Edit" label="Copy" />
+      </Section>
+    </Box>
+  );
+};
+```
+
+### Modal Focus Trap
+
+Restrict focus to modal content:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useInput, useFocusManager, useFocus} from 'ink';
+
+const Button = ({label, onPress}) => {
+  const {isFocused} = useFocus();
+
+  useInput((input, key) => {
+    if ((key.return || input === ' ') && isFocused) {
+      onPress();
+    }
+  });
+
+  return (
+    <Text color={isFocused ? 'cyan' : 'white'}>
+      [{isFocused ? 'X' : ' '}] {label}
+    </Text>
+  );
+};
+
+const App = () => {
+  const [showModal, setShowModal] = useState(false);
+  const {disableFocus, enableFocus} = useFocusManager();
+
+  useInput((input) => {
+    if (input === 'm') {
+      setShowModal(true);
+      // Disable background focus when modal opens
+      disableFocus();
+    }
+  });
+
+  const closeModal = () => {
+    setShowModal(false);
+    // Re-enable background focus
+    enableFocus();
+  };
+
+  return (
+    <Box flexDirection="column">
+      <Text>Press 'm' to open modal</Text>
+      <Button label="Background Button" onPress={() => {}} />
+
+      {showModal && (
+        <Box
+          position="absolute"
+          borderStyle="round"
+          padding={1}
+          flexDirection="column"
+        >
+          <Text>Modal Content</Text>
+          <Button label="Close" onPress={closeModal} />
+        </Box>
+      )}
+    </Box>
+  );
+};
+```
+
+### Cycle Focus with Custom Keys
+
+Use different keys for focus navigation:
+
+```jsx
+import {Box, Text, useInput, useFocusManager, useFocus} from 'ink';
+
+const Item = ({label}) => {
+  const {isFocused} = useFocus();
+  return <Text color={isFocused ? 'yellow' : 'white'}>{label}</Text>;
+};
+
+const App = () => {
+  const {focusNext, focusPrevious} = useFocusManager();
+
+  useInput((input, key) => {
+    // Use 'j' and 'k' like Vim
+    if (input === 'j') {
+      focusNext();
+    } else if (input === 'k') {
+      focusPrevious();
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text dimColor>Use 'j' (down) and 'k' (up) to navigate</Text>
+      <Item label="First" />
+      <Item label="Second" />
+      <Item label="Third" />
+    </Box>
+  );
+};
+```
+
+## Default Behavior
+
+Ink provides default keyboard shortcuts for focus management:
+
+- **Tab** - Focus next component (calls `focusNext()`)
+- **Shift+Tab** - Focus previous component (calls `focusPrevious()`)
+- **Esc** - Clear focus (no component is focused)
+
+## Notes
+
+<Note>
+  Focus management is enabled by default. You only need to call `enableFocus()` if you've previously called `disableFocus()`.
+</Note>
+
+<Note>
+  When focus is disabled, all components lose focus and `activeId` becomes `undefined`. They remain in the focus list and can be focused again when focus is re-enabled.
+</Note>
+
+<Note>
+  The `focus(id)` method is also available from `useFocus()`. Both return the same function, so use whichever is more convenient.
+</Note>
+
+## Related Hooks
+
+- [useFocus](/hooks/use-focus) - Make individual components focusable
+- [useInput](/hooks/use-input) - Implement custom focus navigation with keyboard input

@@ -1,0 +1,25 @@
+---
+title: WindowSize
+description: Dimensions of the terminal window
+---
+
+Dimensions of the terminal window. This type is returned by the `useWindowSize` hook.
+
+## Type Definition
+
+```typescript
+type WindowSize = {
+  readonly columns: number;
+  readonly rows: number;
+};
+```
+
+## Properties
+
+<ResponseField name="columns" type="number">
+  Number of columns (horizontal character cells).
+</ResponseField>
+
+<ResponseField name="rows" type="number">
+  Number of rows (vertical character cells).
+</ResponseField>

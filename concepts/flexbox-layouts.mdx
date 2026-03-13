@@ -1,0 +1,465 @@
+---
+title: Flexbox Layouts
+description: Building terminal layouts with the Yoga layout engine and flexbox properties
+---
+
+## Overview
+
+Ink uses [Yoga](https://github.com/facebook/yoga), Facebook's Flexbox layout engine, to build layouts in the terminal. If you're familiar with CSS Flexbox, you already know how to build layouts in Ink.
+
+<Note>
+Every element in Ink is a Flexbox container by default. Think of it as if every `<div>` in the browser had `display: flex`.
+</Note>
+
+## The Box Component
+
+The `<Box>` component is the fundamental building block for layouts in Ink. It's like a `<div>` with `display: flex` in the browser.
+
+```jsx
+import {Box, Text} from 'ink';
+
+const Example = () => (
+  <Box margin={2}>
+    <Text>This is a box with margin</Text>
+  </Box>
+);
+```
+
+## Dimensions
+
+### Width and Height
+
+Set dimensions in spaces (columns) and lines (rows):
+
+```jsx
+<Box width={10} height={3}>
+  <Text>Fixed size</Text>
+</Box>
+```
+
+Use percentages based on parent size:
+
+```jsx
+<Box width={10}>
+  <Box width="50%">
+    <Text>X</Text>
+  </Box>
+  <Text>Y</Text>
+</Box>
+// Output: 'X    Y'
+```
+
+### Min/Max Dimensions
+
+Constrain size with minimum and maximum values:
+
+```jsx
+<Box minWidth={10} maxWidth={50}>
+  <Text>Constrained width</Text>
+</Box>
+
+<Box minHeight={5} maxHeight="80%">
+  <Text>Constrained height</Text>
+</Box>
+```
+
+<Warning>
+Percentages aren't supported for `minWidth` and `maxWidth` yet due to a Yoga limitation.
+</Warning>
+
+### Aspect Ratio
+
+Maintain proportions with `aspectRatio`:
+
+```jsx
+<Box width={20} aspectRatio={2}>
+  <Text>2:1 ratio box</Text>
+</Box>
+```
+
+## Spacing
+
+### Margin
+
+Add space outside an element:
+
+```jsx
+{/* Individual sides */}
+<Box marginTop={2} marginBottom={2} marginLeft={4} marginRight={4}>
+  <Text>Margin on all sides</Text>
+</Box>
+
+{/* Shorthand properties */}
+<Box marginX={2}>  {/* Left and right */}
+  <Text>Horizontal margin</Text>
+</Box>
+
+<Box marginY={1}>  {/* Top and bottom */}
+  <Text>Vertical margin</Text>
+</Box>
+
+<Box margin={2}>   {/* All sides */}
+  <Text>Margin everywhere</Text>
+</Box>
+```
+
+### Padding
+
+Add space inside an element:
+
+```jsx
+{/* Individual sides */}
+<Box paddingTop={1} paddingBottom={1} paddingLeft={2} paddingRight={2}>
+  <Text>Padded content</Text>
+</Box>
+
+{/* Shorthand properties */}
+<Box paddingX={2}>  {/* Left and right */}
+  <Text>Horizontal padding</Text>
+</Box>
+
+<Box paddingY={1}>  {/* Top and bottom */}
+  <Text>Vertical padding</Text>
+</Box>
+
+<Box padding={2}>   {/* All sides */}
+  <Text>Padding everywhere</Text>
+</Box>
+```
+
+### Gap
+
+Add space between children:
+
+```jsx
+<Box gap={1} flexDirection="column">
+  <Text>Item 1</Text>
+  <Text>Item 2</Text>
+  <Text>Item 3</Text>
+</Box>
+
+{/* Separate column and row gaps */}
+<Box columnGap={2} rowGap={1} flexWrap="wrap" width={10}>
+  <Text>A</Text>
+  <Text>B</Text>
+  <Text>C</Text>
+  <Text>D</Text>
+</Box>
+```
+
+## Flex Properties
+
+### Flex Direction
+
+Control the main axis direction:
+
+```jsx
+{/* Horizontal (default) */}
+<Box flexDirection="row">
+  <Text>X</Text>
+  <Text>Y</Text>
+</Box>
+// Output: 'X Y'
+
+{/* Vertical */}
+<Box flexDirection="column">
+  <Text>X</Text>
+  <Text>Y</Text>
+</Box>
+// Output:
+// X
+// Y
+
+{/* Reversed */}
+<Box flexDirection="row-reverse">
+  <Text>X</Text>
+  <Text>Y</Text>
+</Box>
+// Output: 'Y X'
+
+<Box flexDirection="column-reverse">
+  <Text>X</Text>
+  <Text>Y</Text>
+</Box>
+// Output:
+// Y
+// X
+```
+
+### Flex Grow
+
+Expand to fill available space:
+
+```jsx
+<Box>
+  <Text>Label:</Text>
+  <Box flexGrow={1}>
+    <Text>Fills all remaining space</Text>
+  </Box>
+</Box>
+```
+
+### Flex Shrink
+
+Control how elements shrink:
+
+```jsx
+<Box width={20}>
+  <Box flexShrink={2} width={10}>
+    <Text>Shrinks 2x</Text>
+  </Box>
+  <Box width={10}>
+    <Text>Shrinks 1x</Text>
+  </Box>
+</Box>
+```
+
+### Flex Basis
+
+Set initial size before growing/shrinking:
+
+```jsx
+<Box width={10}>
+  <Box flexBasis={3}>
+    <Text>X</Text>
+  </Box>
+  <Text>Y</Text>
+</Box>
+// Output: 'X  Y'
+
+{/* Percentage basis */}
+<Box width={10}>
+  <Box flexBasis="50%">
+    <Text>X</Text>
+  </Box>
+  <Text>Y</Text>
+</Box>
+// Output: 'X    Y'
+```
+
+### Flex Wrap
+
+Control wrapping behavior:
+
+```jsx
+<Box width={5} flexWrap="wrap">
+  <Text>A</Text>
+  <Text>BC</Text>
+  <Text>D</Text>
+</Box>
+// Output:
+// A BC
+// D
+
+<Box flexDirection="column" height={3} flexWrap="wrap">
+  <Text>A</Text>
+  <Text>B</Text>
+  <Text>C</Text>
+  <Text>D</Text>
+</Box>
+// Output:
+// A C
+// B D
+```
+
+## Alignment
+
+### Justify Content (Main Axis)
+
+Align items along the main axis:
+
+```jsx
+<Box justifyContent="flex-start">
+  <Text>X</Text>
+</Box>
+// [X      ]
+
+<Box justifyContent="center">
+  <Text>X</Text>
+</Box>
+// [   X   ]
+
+<Box justifyContent="flex-end">
+  <Text>X</Text>
+</Box>
+// [      X]
+
+<Box justifyContent="space-between">
+  <Text>X</Text>
+  <Text>Y</Text>
+</Box>
+// [X      Y]
+
+<Box justifyContent="space-around">
+  <Text>X</Text>
+  <Text>Y</Text>
+</Box>
+// [  X   Y  ]
+
+<Box justifyContent="space-evenly">
+  <Text>X</Text>
+  <Text>Y</Text>
+</Box>
+// [   X   Y   ]
+```
+
+### Align Items (Cross Axis)
+
+Align items along the cross axis:
+
+```jsx
+<Box alignItems="flex-start" height={3}>
+  <Text>X</Text>
+</Box>
+// X
+//
+//
+
+<Box alignItems="center" height={3}>
+  <Text>X</Text>
+</Box>
+//
+// X
+//
+
+<Box alignItems="flex-end" height={3}>
+  <Text>X</Text>
+</Box>
+//
+//
+// X
+
+<Box alignItems="stretch" height={3}>
+  <Box width={3}>
+    <Text>X</Text>
+  </Box>
+</Box>
+// Fills height
+```
+
+### Align Self
+
+Override alignment for a specific child:
+
+```jsx
+<Box height={5} alignItems="flex-start">
+  <Box alignSelf="center">
+    <Text>Centered</Text>
+  </Box>
+  <Box alignSelf="flex-end">
+    <Text>At end</Text>
+  </Box>
+</Box>
+```
+
+### Align Content
+
+Align wrapped lines (when using `flexWrap`):
+
+```jsx
+<Box
+  width={5}
+  height={6}
+  flexWrap="wrap"
+  alignContent="space-between"
+>
+  <Text>A</Text>
+  <Text>B</Text>
+  <Text>C</Text>
+  <Text>D</Text>
+</Box>
+```
+
+<Note>
+Ink defaults to `alignContent: "flex-start"` instead of CSS's `stretch` to keep wrapped lines compact in fixed-height boxes.
+</Note>
+
+## Positioning
+
+### Position Types
+
+```jsx
+{/* Relative (default) */}
+<Box position="relative" top={2} left={3}>
+  <Text>Offset from normal position</Text>
+</Box>
+
+{/* Absolute */}
+<Box position="absolute" top={0} right={0}>
+  <Text>Positioned relative to parent</Text>
+</Box>
+
+{/* Static - ignores top/right/bottom/left */}
+<Box position="static" top={5}>  {/* top is ignored */}
+  <Text>Normal flow</Text>
+</Box>
+```
+
+### Offsets
+
+Use numbers or percentages:
+
+```jsx
+<Box position="absolute" top={2} left={5}>
+  <Text>Fixed position</Text>
+</Box>
+
+<Box position="absolute" top="10%" right="5%">
+  <Text>Percentage position</Text>
+</Box>
+```
+
+## Practical Layout Example
+
+Here's a complete example with borders and layout:
+
+```jsx
+import {Box, Text, render} from 'ink';
+
+function Layout() {
+  return (
+    <Box flexDirection="column" padding={2}>
+      {/* Header */}
+      <Box borderStyle="round" paddingX={2}>
+        <Text bold>My CLI App</Text>
+      </Box>
+
+      {/* Content area with two columns */}
+      <Box marginTop={1} gap={2}>
+        {/* Sidebar */}
+        <Box
+          flexDirection="column"
+          borderStyle="single"
+          padding={1}
+          width={20}
+        >
+          <Text>Menu Item 1</Text>
+          <Text>Menu Item 2</Text>
+          <Text>Menu Item 3</Text>
+        </Box>
+
+        {/* Main content */}
+        <Box
+          flexGrow={1}
+          flexDirection="column"
+          borderStyle="single"
+          padding={1}
+        >
+          <Text>Main content goes here</Text>
+        </Box>
+      </Box>
+
+      {/* Footer */}
+      <Box marginTop={1} justifyContent="center">
+        <Text dimColor>Press Ctrl+C to exit</Text>
+      </Box>
+    </Box>
+  );
+}
+
+render(<Layout />);
+```
+
+<Tip>
+Use `<Box flexGrow={1}>` to make an element fill all available space. This is perfect for creating responsive layouts that adapt to terminal size.
+</Tip>

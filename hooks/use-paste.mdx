@@ -1,0 +1,256 @@
+---
+title: 'usePaste'
+description: 'Handle pasted text in the terminal separately from keyboard input'
+---
+
+`usePaste` is a React hook that calls your handler whenever the user pastes text into the terminal. It automatically enables bracketed paste mode, which allows pasted text to be delivered as a single string rather than individual keystrokes.
+
+## Import
+
+```jsx
+import {usePaste} from 'ink';
+```
+
+## Signature
+
+```typescript
+usePaste(
+  handler: (text: string) => void,
+  options?: {isActive?: boolean}
+): void
+```
+
+## Parameters
+
+<ParamField path="handler" type="function" required>
+  Callback function invoked when the user pastes text.
+  
+  <Expandable title="Handler parameters">
+    <ParamField path="text" type="string">
+      The full pasted string, including newlines, escape sequences, and other special characters preserved exactly as pasted.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="options" type="object">
+  <Expandable title="properties">
+    <ParamField path="isActive" type="boolean" default="true">
+      Enable or disable the paste handler. Useful when multiple components use `usePaste` and only one should be active at a time.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Return Value
+
+`void` - This hook doesn't return anything.
+
+## How It Works
+
+Bracketed paste mode is a terminal feature that wraps pasted content with special escape sequences (`\x1b[200~` and `\x1b[201~`). This allows applications to distinguish between typed and pasted input.
+
+When `usePaste` is active:
+1. Bracketed paste mode is automatically enabled in the terminal
+2. Pasted content is captured as a single string
+3. The pasted text is **not** forwarded to `useInput` handlers
+4. When the component unmounts, bracketed paste mode is disabled
+
+## Examples
+
+### Basic Paste Handling
+
+Log pasted content to the console:
+
+```jsx
+import {usePaste, Text} from 'ink';
+
+const App = () => {
+  usePaste((text) => {
+    console.log('Pasted:', text);
+  });
+
+  return <Text>Try pasting some text</Text>;
+};
+```
+
+### Combining with useInput
+
+`usePaste` and `useInput` work together seamlessly:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useInput, usePaste} from 'ink';
+
+const TextInput = () => {
+  const [value, setValue] = useState('');
+
+  useInput((input, key) => {
+    // Only receives typed characters and key events, not pasted text
+    if (key.return) {
+      console.log('Submit:', value);
+      setValue('');
+    } else if (key.backspace) {
+      setValue(v => v.slice(0, -1));
+    } else if (input) {
+      setValue(v => v + input);
+    }
+  });
+
+  usePaste((text) => {
+    // Receives the full pasted string, including newlines
+    setValue(v => v + text);
+  });
+
+  return (
+    <Box>
+      <Text>Input: {value}</Text>
+    </Box>
+  );
+};
+```
+
+### Multi-line Paste Handling
+
+Handle pasted content with multiple lines:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, usePaste} from 'ink';
+
+const MultilineInput = () => {
+  const [lines, setLines] = useState([]);
+
+  usePaste((text) => {
+    const newLines = text.split('\n');
+    setLines(prevLines => [...prevLines, ...newLines]);
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text>Pasted lines:</Text>
+      {lines.map((line, i) => (
+        <Text key={i}>{i + 1}. {line}</Text>
+      ))}
+    </Box>
+  );
+};
+```
+
+### Conditional Paste Handling
+
+Use `isActive` to control when paste events are captured:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, usePaste, useInput} from 'ink';
+
+const App = () => {
+  const [enabled, setEnabled] = useState(true);
+
+  useInput((input) => {
+    if (input === 't') {
+      setEnabled(e => !e);
+    }
+  });
+
+  usePaste((text) => {
+    console.log('Pasted:', text);
+  }, {isActive: enabled});
+
+  return (
+    <Box flexDirection="column">
+      <Text>Paste handling: {enabled ? 'enabled' : 'disabled'}</Text>
+      <Text dimColor>Press 't' to toggle</Text>
+    </Box>
+  );
+};
+```
+
+### Processing Pasted Code
+
+Validate and process pasted code snippets:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, usePaste} from 'ink';
+
+const CodeInput = () => {
+  const [code, setCode] = useState('');
+  const [error, setError] = useState(null);
+
+  usePaste((text) => {
+    try {
+      // Validate the pasted code
+      JSON.parse(text);
+      setCode(text);
+      setError(null);
+    } catch (err) {
+      setError('Invalid JSON');
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text>Paste JSON here:</Text>
+      {error && <Text color="red">{error}</Text>}
+      {code && <Text color="green">Valid JSON pasted!</Text>}
+    </Box>
+  );
+};
+```
+
+### Form Field with Paste Support
+
+Create a complete form field with both typing and pasting:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useInput, usePaste, useFocus} from 'ink';
+
+const FormField = ({label, onSubmit}) => {
+  const [value, setValue] = useState('');
+  const {isFocused} = useFocus();
+
+  useInput((input, key) => {
+    if (key.return) {
+      onSubmit(value);
+    } else if (key.backspace) {
+      setValue(v => v.slice(0, -1));
+    } else if (input) {
+      setValue(v => v + input);
+    }
+  }, {isActive: isFocused});
+
+  usePaste((text) => {
+    // Strip newlines from pasted content for single-line input
+    const sanitized = text.replace(/[\r\n]+/g, ' ');
+    setValue(v => v + sanitized);
+  }, {isActive: isFocused});
+
+  return (
+    <Box>
+      <Text>{label}: </Text>
+      <Text color={isFocused ? 'cyan' : 'white'}>{value}</Text>
+    </Box>
+  );
+};
+```
+
+## Notes
+
+<Note>
+  Bracketed paste mode is automatically enabled when `usePaste` is active and disabled when the component unmounts. You don't need to manage this manually.
+</Note>
+
+<Note>
+  When `usePaste` is active, pasted content is **never** forwarded to `useInput` handlers. This prevents pasted text from being misinterpreted as rapid key presses.
+</Note>
+
+<Warning>
+  Not all terminals support bracketed paste mode. In terminals without support, pasted content may still be delivered character-by-character to `useInput` handlers.
+</Warning>
+
+## Related Hooks
+
+- [useInput](/hooks/use-input) - Handle typed keyboard input
+- [useFocus](/hooks/use-focus) - Combine with focus to enable/disable paste handling
+- [useStdin](/hooks/use-stdin) - Low-level stdin access if you need custom paste handling

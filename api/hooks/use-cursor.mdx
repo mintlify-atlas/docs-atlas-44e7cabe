@@ -1,0 +1,60 @@
+---
+title: useCursor
+description: Hook for controlling terminal cursor position
+---
+
+A React hook that returns methods to control the terminal cursor position.
+
+Setting a cursor position makes the cursor visible at the specified coordinates (relative to the Ink output origin). This is useful for IME (Input Method Editor) support, where the composing character is displayed at the cursor location.
+
+Pass `undefined` to hide the cursor.
+
+## Signature
+
+```typescript
+const useCursor = () => {
+  setCursorPosition: (position: CursorPosition | undefined) => void;
+}
+```
+
+## Parameters
+
+This hook takes no parameters.
+
+## Return Value
+
+<ResponseField name="setCursorPosition" type="(position: CursorPosition | undefined) => void">
+  Set the cursor position or hide the cursor by passing `undefined`.
+  
+  The position is relative to the Ink output origin (top-left corner of Ink's rendered content).
+</ResponseField>
+
+## Types
+
+### CursorPosition
+
+<ResponseField name="x" type="number">
+  Horizontal position (column) of the cursor.
+</ResponseField>
+
+<ResponseField name="y" type="number">
+  Vertical position (row) of the cursor.
+</ResponseField>
+
+## Example
+
+```tsx
+import {useCursor} from 'ink';
+
+const Example = () => {
+  const {setCursorPosition} = useCursor();
+
+  // Show cursor at position (10, 5)
+  setCursorPosition({x: 10, y: 5});
+
+  // Hide cursor
+  // setCursorPosition(undefined);
+
+  return …
+};
+```

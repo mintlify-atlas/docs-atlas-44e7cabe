@@ -1,0 +1,79 @@
+---
+title: TextProps
+description: Props for the Text component
+---
+
+Props accepted by the `<Text>` component.
+
+## Type Definition
+
+```typescript
+type TextProps = {
+  readonly 'aria-label'?: string;
+  readonly 'aria-hidden'?: boolean;
+  readonly color?: LiteralUnion<ForegroundColorName, string>;
+  readonly backgroundColor?: LiteralUnion<ForegroundColorName, string>;
+  readonly dimColor?: boolean;
+  readonly bold?: boolean;
+  readonly italic?: boolean;
+  readonly underline?: boolean;
+  readonly strikethrough?: boolean;
+  readonly inverse?: boolean;
+  readonly wrap?: Styles['textWrap'];
+  readonly children?: ReactNode;
+};
+```
+
+## Properties
+
+<ResponseField name="aria-label" type="string">
+  A label for the element for screen readers.
+</ResponseField>
+
+<ResponseField name="aria-hidden" type="boolean">
+  Hide the element from screen readers.
+</ResponseField>
+
+<ResponseField name="color" type="string">
+  Change text color. Ink uses Chalk under the hood, so all its functionality is supported.
+  
+  Accepts standard color names like `'red'`, `'green'`, `'blue'`, `'yellow'`, `'cyan'`, `'magenta'`, etc., or hex values.
+</ResponseField>
+
+<ResponseField name="backgroundColor" type="string">
+  Same as `color`, but for the background.
+  
+  Accepts standard color names or hex values.
+</ResponseField>
+
+<ResponseField name="dimColor" type="boolean">
+  Dim the color (make it less bright).
+</ResponseField>
+
+<ResponseField name="bold" type="boolean">
+  Make the text bold.
+</ResponseField>
+
+<ResponseField name="italic" type="boolean">
+  Make the text italic.
+</ResponseField>
+
+<ResponseField name="underline" type="boolean">
+  Make the text underlined.
+</ResponseField>
+
+<ResponseField name="strikethrough" type="boolean">
+  Make the text crossed out with a line.
+</ResponseField>
+
+<ResponseField name="inverse" type="boolean">
+  Inverse background and foreground colors.
+</ResponseField>
+
+<ResponseField name="wrap" type="'wrap' | 'end' | 'middle' | 'truncate-end' | 'truncate' | 'truncate-middle' | 'truncate-start'">
+  This property tells Ink to wrap or truncate text if its width is larger than the container. If `wrap` is passed (the default), Ink will wrap text and split it into multiple lines. If `truncate-*` is passed, Ink will truncate text instead, resulting in one line of text with the rest cut off.
+</ResponseField>
+
+<ResponseField name="children" type="ReactNode">
+  The text content to display.
+</ResponseField>

@@ -1,0 +1,281 @@
+---
+title: Text
+description: Display and style text in your CLI applications
+icon: font
+---
+
+The `<Text>` component is the fundamental building block for displaying text in Ink. It provides styling capabilities similar to CSS, including colors, font styles, and text wrapping.
+
+<Note>
+  All text in Ink must be wrapped in a `<Text>` component. You cannot render plain strings directly.
+</Note>
+
+## Basic Usage
+
+```jsx
+import {render, Text} from 'ink';
+
+const App = () => (
+  <>
+    <Text>Plain text</Text>
+    <Text color="green">Colored text</Text>
+    <Text bold>Bold text</Text>
+  </>
+);
+
+render(<App />);
+```
+
+## Props
+
+### color
+
+<ParamField path="color" type="string">
+  Change text color. Supports color names, hex values, and RGB.
+  
+  Ink uses [chalk](https://github.com/chalk/chalk) under the hood, so all its color formats are supported.
+</ParamField>
+
+```jsx
+<Text color="green">Green text</Text>
+<Text color="#005cc5">Hex blue</Text>
+<Text color="rgb(232, 131, 136)">RGB red</Text>
+```
+
+### backgroundColor
+
+<ParamField path="backgroundColor" type="string">
+  Set background color for the text. Accepts the same values as `color`.
+</ParamField>
+
+```jsx
+<Text backgroundColor="green" color="white">Green background</Text>
+<Text backgroundColor="#005cc5" color="white">Blue background</Text>
+```
+
+### dimColor
+
+<ParamField path="dimColor" type="boolean" default="false">
+  Make the color less bright (dimmed).
+</ParamField>
+
+```jsx
+<Text color="red" dimColor>
+  Dimmed red text
+</Text>
+```
+
+### bold
+
+<ParamField path="bold" type="boolean" default="false">
+  Make the text bold.
+</ParamField>
+
+```jsx
+<Text bold>Bold text</Text>
+```
+
+### italic
+
+<ParamField path="italic" type="boolean" default="false">
+  Make the text italic.
+</ParamField>
+
+```jsx
+<Text italic>Italic text</Text>
+```
+
+### underline
+
+<ParamField path="underline" type="boolean" default="false">
+  Add an underline to the text.
+</ParamField>
+
+```jsx
+<Text underline>Underlined text</Text>
+```
+
+### strikethrough
+
+<ParamField path="strikethrough" type="boolean" default="false">
+  Add a strikethrough line through the text.
+</ParamField>
+
+```jsx
+<Text strikethrough>Strikethrough text</Text>
+```
+
+### inverse
+
+<ParamField path="inverse" type="boolean" default="false">
+  Invert background and foreground colors.
+</ParamField>
+
+```jsx
+<Text inverse color="yellow">
+  Inversed yellow
+</Text>
+```
+
+### wrap
+
+<ParamField path="wrap" type="string" default="wrap">
+  Control how text behaves when it exceeds container width.
+  
+  **Options:**
+  - `wrap` - Wrap text to multiple lines
+  - `truncate` or `truncate-end` - Cut off with ellipsis at end
+  - `truncate-middle` - Cut off with ellipsis in middle
+  - `truncate-start` - Cut off with ellipsis at start
+</ParamField>
+
+```jsx
+<Box width={7}>
+  <Text>Hello World</Text>
+</Box>
+// Output: 'Hello\nWorld'
+
+<Box width={7}>
+  <Text wrap="truncate">Hello World</Text>
+</Box>
+// Output: 'Hello…'
+
+<Box width={7}>
+  <Text wrap="truncate-middle">Hello World</Text>
+</Box>
+// Output: 'He…ld'
+
+<Box width={7}>
+  <Text wrap="truncate-start">Hello World</Text>
+</Box>
+// Output: '…World'
+```
+
+## Accessibility Props
+
+### aria-label
+
+<ParamField path="aria-label" type="string">
+  A label for the element for screen readers. When screen reader mode is enabled, this replaces the visible content.
+</ParamField>
+
+```jsx
+<Text aria-label="Success indicator">✓</Text>
+```
+
+### aria-hidden
+
+<ParamField path="aria-hidden" type="boolean" default="false">
+  Hide the element from screen readers.
+</ParamField>
+
+```jsx
+<Text aria-hidden>Decorative content</Text>
+```
+
+## Common Patterns
+
+### Combining Styles
+
+You can combine multiple style props:
+
+```jsx
+<Text color="green" bold underline>
+  Important success message
+</Text>
+```
+
+### Nested Text Components
+
+`<Text>` components can be nested for different styles:
+
+```jsx
+<Text>
+  This is <Text color="green">green</Text> and this is <Text bold>bold</Text>
+</Text>
+```
+
+### Status Indicators
+
+```jsx
+const Status = ({type, message}) => (
+  <Text>
+    {type === 'success' && <Text color="green">✓ </Text>}
+    {type === 'error' && <Text color="red">✗ </Text>}
+    {type === 'warning' && <Text color="yellow">⚠ </Text>}
+    {message}
+  </Text>
+);
+```
+
+### Counter Example
+
+From the official Ink examples:
+
+```jsx
+import React, {useState, useEffect} from 'react';
+import {render, Text} from 'ink';
+
+const Counter = () => {
+  const [counter, setCounter] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCounter(prevCounter => prevCounter + 1);
+    }, 100);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+
+  return <Text color="green">{counter} tests passed</Text>;
+};
+
+render(<Counter />);
+```
+
+## Important Notes
+
+<Warning>
+  `<Text>` only allows text nodes and nested `<Text>` components. You cannot use `<Box>` or other components inside `<Text>`.
+</Warning>
+
+```jsx
+{/* ✅ Correct */}
+<Text>
+  Hello <Text bold>world</Text>
+</Text>
+
+{/* ❌ Wrong */}
+<Text>
+  <Box>This won't work</Box>
+</Text>
+```
+
+## Background Color Inheritance
+
+When a `<Box>` has a `backgroundColor`, child `<Text>` components automatically inherit it:
+
+```jsx
+<Box backgroundColor="blue">
+  <Text>Inherits blue background</Text>
+  <Text backgroundColor="yellow">Overrides with yellow</Text>
+</Box>
+```
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Box" href="/components/box">
+    Container for layout and positioning
+  </Card>
+  
+  <Card title="Newline" href="/components/newline">
+    Add line breaks within text
+  </Card>
+  
+  <Card title="Transform" href="/components/transform">
+    Apply transformations to text output
+  </Card>
+</CardGroup>

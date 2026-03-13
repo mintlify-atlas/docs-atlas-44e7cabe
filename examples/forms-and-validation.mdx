@@ -1,0 +1,337 @@
+---
+title: Forms & Validation
+description: Handle user input, build forms, and validate data in Ink applications
+---
+
+Ink provides powerful hooks for handling keyboard input and building interactive forms. This guide covers text input, validation patterns, and form submission.
+
+## Text Input Example
+
+This example from `examples/use-input/use-input.tsx` shows a moveable character controlled by arrow keys:
+
+```tsx
+import React from 'react';
+import {render, useInput, useApp, Box, Text} from 'ink';
+
+function Robot() {
+  const {exit} = useApp();
+  const [x, setX] = React.useState(1);
+  const [y, setY] = React.useState(1);
+
+  useInput((input, key) => {
+    if (input === 'q') {
+      exit();
+    }
+
+    if (key.leftArrow) {
+      setX(Math.max(1, x - 1));
+    }
+
+    if (key.rightArrow) {
+      setX(Math.min(20, x + 1));
+    }
+
+    if (key.upArrow) {
+      setY(Math.max(1, y - 1));
+    }
+
+    if (key.downArrow) {
+      setY(Math.min(10, y + 1));
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text>Use arrow keys to move the face. Press "q" to exit.</Text>
+      <Box height={12} paddingLeft={x} paddingTop={y}>
+        <Text>^_^</Text>
+      </Box>
+    </Box>
+  );
+}
+
+render(<Robot />);
+```
+
+## Key Concepts
+
+### The useInput Hook
+
+`useInput` receives all keyboard input and provides two parameters:
+
+```tsx
+useInput((input, key) => {
+  // input: The character typed (e.g., 'a', 'b', '1')
+  // key: Object with special key flags
+});
+```
+
+**Available key properties:**
+- `key.upArrow`, `key.downArrow`, `key.leftArrow`, `key.rightArrow`
+- `key.return` (Enter key)
+- `key.escape`
+- `key.backspace`, `key.delete`
+- `key.pageUp`, `key.pageDown`
+- `key.ctrl` - Check if Ctrl is pressed
+- `key.shift` - Check if Shift is pressed
+- `key.meta` - Check if Meta/Cmd is pressed
+
+### Input Validation
+
+Add validation by checking input before updating state:
+
+```tsx
+useInput((input, key) => {
+  if (key.leftArrow) {
+    // Validate: Don't go below minimum
+    setX(Math.max(1, x - 1));
+  }
+
+  if (key.rightArrow) {
+    // Validate: Don't exceed maximum
+    setX(Math.min(20, x + 1));
+  }
+});
+```
+
+## Chat Input Example
+
+From `examples/chat/chat.tsx`, here's a simple chat interface that builds a string from keypresses:
+
+```tsx
+import React, {useState} from 'react';
+import {render, Text, Box, useInput} from 'ink';
+
+let messageId = 0;
+
+function ChatApp() {
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState([]);
+
+  useInput((character, key) => {
+    if (key.return) {
+      if (input) {
+        setMessages(prevMessages => [
+          ...prevMessages,
+          {
+            id: messageId++,
+            text: `User: ${input}`,
+          },
+        ]);
+        setInput('');
+      }
+    } else if (key.backspace || key.delete) {
+      setInput(currentInput => currentInput.slice(0, -1));
+    } else {
+      setInput(currentInput => currentInput + character);
+    }
+  });
+
+  return (
+    <Box flexDirection="column" padding={1}>
+      <Box flexDirection="column">
+        {messages.map(message => (
+          <Text key={message.id}>{message.text}</Text>
+        ))}
+      </Box>
+
+      <Box marginTop={1}>
+        <Text>Enter your message: {input}</Text>
+      </Box>
+    </Box>
+  );
+}
+
+render(<ChatApp />);
+```
+
+**Key features:**
+- Builds a string character by character
+- Handles backspace to delete characters
+- Submits on Enter key
+- Clears input after submission
+- Displays message history
+
+## Form Validation Pattern
+
+Here's a complete form with validation:
+
+```tsx
+import React, {useState} from 'react';
+import {render, Box, Text, useInput} from 'ink';
+
+function SignupForm() {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [field, setField] = useState('username'); // 'username' or 'email'
+  const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  useInput((input, key) => {
+    if (submitted) return;
+
+    if (key.return) {
+      // Validate current field
+      const newErrors = {};
+      
+      if (field === 'username' && username.length < 3) {
+        newErrors.username = 'Username must be at least 3 characters';
+      }
+      
+      if (field === 'email' && !email.includes('@')) {
+        newErrors.email = 'Invalid email address';
+      }
+      
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
+      
+      // Move to next field or submit
+      if (field === 'username') {
+        setField('email');
+      } else {
+        setSubmitted(true);
+      }
+    } else if (key.backspace || key.delete) {
+      if (field === 'username') {
+        setUsername(prev => prev.slice(0, -1));
+      } else {
+        setEmail(prev => prev.slice(0, -1));
+      }
+      setErrors({}); // Clear errors on edit
+    } else if (input) {
+      if (field === 'username') {
+        setUsername(prev => prev + input);
+      } else {
+        setEmail(prev => prev + input);
+      }
+      setErrors({}); // Clear errors on edit
+    }
+  });
+
+  if (submitted) {
+    return (
+      <Box flexDirection="column">
+        <Text color="green">Signup successful!</Text>
+        <Text>Username: {username}</Text>
+        <Text>Email: {email}</Text>
+      </Box>
+    );
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Text bold>Signup Form</Text>
+      
+      <Box marginTop={1}>
+        <Text color={field === 'username' ? 'blue' : 'gray'}>
+          Username: {username}
+          {field === 'username' && '█'}
+        </Text>
+      </Box>
+      {errors.username && (
+        <Text color="red">{errors.username}</Text>
+      )}
+      
+      <Box marginTop={1}>
+        <Text color={field === 'email' ? 'blue' : 'gray'}>
+          Email: {email}
+          {field === 'email' && '█'}
+        </Text>
+      </Box>
+      {errors.email && (
+        <Text color="red">{errors.email}</Text>
+      )}
+      
+      <Box marginTop={1}>
+        <Text dimColor>Press Enter to continue</Text>
+      </Box>
+    </Box>
+  );
+}
+
+render(<SignupForm />);
+```
+
+## Validation Patterns
+
+### Length Validation
+
+```tsx
+if (input.length < 3) {
+  setError('Must be at least 3 characters');
+}
+```
+
+### Email Validation
+
+```tsx
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+if (!emailRegex.test(email)) {
+  setError('Invalid email address');
+}
+```
+
+### Number Validation
+
+```tsx
+const number = parseInt(input, 10);
+if (isNaN(number)) {
+  setError('Must be a number');
+}
+if (number < 0 || number > 100) {
+  setError('Must be between 0 and 100');
+}
+```
+
+### Required Fields
+
+```tsx
+if (!input.trim()) {
+  setError('This field is required');
+}
+```
+
+## Accessibility
+
+For screen reader support, use accessible number input:
+
+```tsx
+import {useIsScreenReaderEnabled} from 'ink';
+
+function AccessibleInput() {
+  const isScreenReaderEnabled = useIsScreenReaderEnabled();
+  
+  useInput((input, key) => {
+    if (isScreenReaderEnabled) {
+      const number = Number.parseInt(input, 10);
+      if (!Number.isNaN(number) && number > 0 && number <= items.length) {
+        setSelectedIndex(number - 1);
+      }
+    }
+  });
+}
+```
+
+## Running the Examples
+
+```bash
+# Robot movement
+npm run example examples/use-input
+
+# Chat app
+npm run example examples/chat
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Lists & Navigation" icon="list" href="/examples/lists-and-navigation">
+    Build navigable lists with keyboard controls
+  </Card>
+  
+  <Card title="useInput Hook" icon="code" href="/hooks/use-input">
+    Complete API reference for useInput
+  </Card>
+</CardGroup>

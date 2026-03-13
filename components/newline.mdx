@@ -1,0 +1,309 @@
+---
+title: Newline
+description: Insert one or more newline characters within text components
+icon: turn-down
+---
+
+The `<Newline>` component adds one or more newline (`\n`) characters to your text output. It must be used within `<Text>` components.
+
+<Note>
+  `<Newline>` provides a cleaner way to add line breaks than using `\n` characters in your JSX.
+</Note>
+
+## Basic Usage
+
+```jsx
+import {render, Text, Newline} from 'ink';
+
+const App = () => (
+  <Text>
+    <Text color="green">Hello</Text>
+    <Newline />
+    <Text color="red">World</Text>
+  </Text>
+);
+
+render(<App />);
+```
+
+Output:
+```
+Hello
+World
+```
+
+## Props
+
+### count
+
+<ParamField path="count" type="number" default="1">
+  Number of newlines to insert.
+</ParamField>
+
+```jsx
+import {Text, Newline} from 'ink';
+
+// Single newline
+<Text>
+  Line 1
+  <Newline />
+  Line 2
+</Text>
+
+// Multiple newlines
+<Text>
+  Line 1
+  <Newline count={3} />
+  Line 4 (with 3 blank lines above)
+</Text>
+```
+
+## Examples
+
+### Simple Line Break
+
+```jsx
+import {Text, Newline} from 'ink';
+
+const Greeting = () => (
+  <Text>
+    Hello
+    <Newline />
+    Welcome to Ink!
+  </Text>
+);
+// Output:
+// Hello
+// Welcome to Ink!
+```
+
+### Multiple Newlines
+
+```jsx
+const Spaced = () => (
+  <Text>
+    Section 1
+    <Newline count={2} />
+    Section 2
+  </Text>
+);
+// Output:
+// Section 1
+//
+//
+// Section 2
+```
+
+### Mixed with Styled Text
+
+```jsx
+const ColoredOutput = () => (
+  <Text>
+    <Text color="green">Success!</Text>
+    <Newline />
+    <Text dimColor>Operation completed</Text>
+  </Text>
+);
+```
+
+### List with Line Breaks
+
+```jsx
+const List = ({items}) => (
+  <Text>
+    {items.map((item, index) => (
+      <React.Fragment key={index}>
+        <Text>• {item}</Text>
+        {index < items.length - 1 && <Newline />}
+      </React.Fragment>
+    ))}
+  </Text>
+);
+
+const App = () => (
+  <List items={['First item', 'Second item', 'Third item']} />
+);
+// Output:
+// • First item
+// • Second item
+// • Third item
+```
+
+### Paragraph Formatting
+
+```jsx
+const Article = () => (
+  <Text>
+    <Text bold>Introduction</Text>
+    <Newline count={2} />
+    <Text>
+      This is the first paragraph with some content.
+    </Text>
+    <Newline count={2} />
+    <Text>
+      This is the second paragraph with more content.
+    </Text>
+  </Text>
+);
+```
+
+### Error Messages
+
+```jsx
+const ErrorMessage = ({title, message, details}) => (
+  <Text>
+    <Text color="red" bold>Error: {title}</Text>
+    <Newline />
+    <Text>{message}</Text>
+    {details && (
+      <>
+        <Newline count={2} />
+        <Text dimColor>Details: {details}</Text>
+      </>
+    )}
+  </Text>
+);
+```
+
+## Common Patterns
+
+### Conditional Line Breaks
+
+```jsx
+const ConditionalBreak = ({showBreak}) => (
+  <Text>
+    Line 1
+    {showBreak && <Newline />}
+    Line 2
+  </Text>
+);
+```
+
+### Dynamic Line Spacing
+
+```jsx
+const DynamicSpacing = ({spacing = 1}) => (
+  <Text>
+    Section 1
+    <Newline count={spacing} />
+    Section 2
+  </Text>
+);
+```
+
+### Header with Separator
+
+```jsx
+const Header = ({title}) => (
+  <Text>
+    <Text bold color="blue">{title}</Text>
+    <Newline />
+    <Text>{'─'.repeat(title.length)}</Text>
+    <Newline count={2} />
+  </Text>
+);
+```
+
+## Alternative: Using \n
+
+You can also use the newline character directly:
+
+```jsx
+// Using <Newline> component
+<Text>
+  Hello
+  <Newline />
+  World
+</Text>
+
+// Equivalent with \n
+<Text>
+  {'Hello\nWorld'}
+</Text>
+
+// Or with template literals
+<Text>
+  {`Hello
+World`}
+</Text>
+```
+
+<Info>
+  `<Newline>` is more readable and explicit, especially when you need multiple newlines or conditional breaks.
+</Info>
+
+## When to Use Newline vs Box
+
+Use `<Newline>` for text-level line breaks:
+
+```jsx
+// ✅ Good - text-level breaks
+<Text>
+  Line 1
+  <Newline />
+  Line 2
+</Text>
+```
+
+Use `<Box>` with `flexDirection="column"` for layout:
+
+```jsx
+// ✅ Better for layout
+<Box flexDirection="column">
+  <Text>Line 1</Text>
+  <Text>Line 2</Text>
+</Box>
+```
+
+## Important Notes
+
+<Warning>
+  `<Newline>` must be used inside a `<Text>` component. It won't work at the top level or inside `<Box>`.
+</Warning>
+
+```jsx
+{/* ✅ Correct */}
+<Text>
+  Hello
+  <Newline />
+  World
+</Text>
+
+{/* ❌ Wrong - not in Text */}
+<Box>
+  <Newline />
+</Box>
+
+{/* ❌ Wrong - top level */}
+<>
+  <Text>Hello</Text>
+  <Newline />
+  <Text>World</Text>
+</>
+```
+
+## Comparison Table
+
+| Method | Use Case | Readability |
+|--------|----------|-------------|
+| `<Newline />` | Single line break | High |
+| `<Newline count={n} />` | Multiple breaks | High |
+| `'\n'` | Inline break | Medium |
+| Template literals | Multi-line strings | Medium |
+| `<Box flexDirection="column">` | Layout structure | High |
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Text" href="/components/text">
+    Display and style text content
+  </Card>
+  
+  <Card title="Box" href="/components/box">
+    Use for structural layout with flexDirection
+  </Card>
+  
+  <Card title="Spacer" href="/components/spacer">
+    Fill available space between elements
+  </Card>
+</CardGroup>

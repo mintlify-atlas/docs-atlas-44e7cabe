@@ -1,0 +1,138 @@
+---
+title: Text
+description: Display and style text in your CLI application
+---
+
+This component can display text and change its style to make it bold, underlined, italic, or strikethrough.
+
+## Component Signature
+
+```tsx
+import {Text} from 'ink';
+
+function Component() {
+  return (
+    <Text color="green" bold>
+      Hello World
+    </Text>
+  );
+}
+```
+
+## Props
+
+### Color & Background
+
+<ParamField path="color" type="LiteralUnion<ForegroundColorName, string>">
+  Change text color. Ink uses Chalk under the hood, so all its functionality is supported.
+  
+  Accepts color names like `'red'`, `'green'`, `'blue'`, or hex colors like `'#ff0000'`.
+</ParamField>
+
+<ParamField path="backgroundColor" type="LiteralUnion<ForegroundColorName, string>">
+  Same as `color`, but for the background.
+  
+  Accepts color names like `'red'`, `'green'`, `'blue'`, or hex colors like `'#ff0000'`.
+</ParamField>
+
+<ParamField path="dimColor" type="boolean">
+  Dim the color (make it less bright).
+</ParamField>
+
+### Text Styling
+
+<ParamField path="bold" type="boolean">
+  Make the text bold.
+</ParamField>
+
+<ParamField path="italic" type="boolean">
+  Make the text italic.
+</ParamField>
+
+<ParamField path="underline" type="boolean">
+  Make the text underlined.
+</ParamField>
+
+<ParamField path="strikethrough" type="boolean">
+  Make the text crossed out with a line.
+</ParamField>
+
+<ParamField path="inverse" type="boolean">
+  Inverse background and foreground colors.
+</ParamField>
+
+### Text Wrapping
+
+<ParamField path="wrap" type="'wrap' | 'end' | 'middle' | 'truncate-end' | 'truncate' | 'truncate-middle' | 'truncate-start'">
+  This property tells Ink to wrap or truncate text if its width is larger than the container.
+  
+  - `'wrap'` (default): Ink will wrap text and split it into multiple lines.
+  - `'truncate-*'`: Ink will truncate text, resulting in one line of text with the rest cut off.
+</ParamField>
+
+### Accessibility
+
+<ParamField path="aria-label" type="string">
+  A label for the element for screen readers.
+</ParamField>
+
+<ParamField path="aria-hidden" type="boolean">
+  Hide the element from screen readers.
+</ParamField>
+
+### Content
+
+<ParamField path="children" type="ReactNode">
+  The text content to display.
+</ParamField>
+
+## Examples
+
+### Basic Text Styling
+
+```tsx
+import {Text} from 'ink';
+
+function Example() {
+  return (
+    <>
+      <Text color="green">Green text</Text>
+      <Text color="red" backgroundColor="white">Red on white</Text>
+      <Text bold>Bold text</Text>
+      <Text italic>Italic text</Text>
+      <Text underline>Underlined text</Text>
+      <Text strikethrough>Strikethrough text</Text>
+    </>
+  );
+}
+```
+
+### Combining Styles
+
+```tsx
+import {Text} from 'ink';
+
+function Example() {
+  return (
+    <Text color="blue" bold underline>
+      Blue, bold, and underlined
+    </Text>
+  );
+}
+```
+
+### Text Wrapping
+
+```tsx
+import {Box, Text} from 'ink';
+
+function Example() {
+  return (
+    <Box width={20}>
+      <Text wrap="truncate-end">
+        This is a very long text that will be truncated
+      </Text>
+    </Box>
+  );
+}
+```

@@ -1,0 +1,62 @@
+---
+title: useApp
+description: Hook for accessing app lifecycle methods
+---
+
+A React hook that returns app lifecycle methods like `exit()` and `waitUntilRenderFlush()`.
+
+## Signature
+
+```typescript
+const useApp = () => {
+  exit: (errorOrResult?: Error | unknown) => void;
+  waitUntilRenderFlush: () => Promise<void>;
+}
+```
+
+## Parameters
+
+This hook takes no parameters.
+
+## Return Value
+
+<ResponseField name="exit" type="(errorOrResult?: Error | unknown) => void">
+  Exit (unmount) the whole Ink app.
+  
+  - `exit()` — resolves `waitUntilExit()` with `undefined`.
+  - `exit(new Error('…'))` — rejects `waitUntilExit()` with the error.
+  - `exit(value)` — resolves `waitUntilExit()` with `value`.
+</ResponseField>
+
+<ResponseField name="waitUntilRenderFlush" type="() => Promise<void>">
+  Returns a promise that settles after pending render output is flushed to stdout.
+</ResponseField>
+
+## Example
+
+```tsx
+import {useEffect} from 'react';
+import {useApp} from 'ink';
+
+const Example = () => {
+  const {exit, waitUntilRenderFlush} = useApp();
+
+  useEffect(() => {
+    void (async () => {
+      await waitUntilRenderFlush();
+      runNextCommand();
+    })();
+  }, [waitUntilRenderFlush]);
+
+  // Exit after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      exit();
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [exit]);
+
+  return …;
+};
+```

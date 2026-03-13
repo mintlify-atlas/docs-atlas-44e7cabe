@@ -1,0 +1,374 @@
+---
+title: 'useWindowSize'
+description: 'Get terminal dimensions and handle resize events'
+---
+
+`useWindowSize` is a React hook that returns the current terminal window dimensions and automatically re-renders your component whenever the terminal is resized.
+
+## Import
+
+```jsx
+import {useWindowSize} from 'ink';
+```
+
+## Signature
+
+```typescript
+useWindowSize(): {
+  columns: number;
+  rows: number;
+}
+```
+
+## Return Value
+
+<ResponseField name="columns" type="number">
+  Number of columns (horizontal character cells) in the terminal window.
+</ResponseField>
+
+<ResponseField name="rows" type="number">
+  Number of rows (vertical character cells) in the terminal window.
+</ResponseField>
+
+## Examples
+
+### Display Terminal Size
+
+Show the current terminal dimensions:
+
+```jsx
+import {Text, useWindowSize} from 'ink';
+
+const TerminalSize = () => {
+  const {columns, rows} = useWindowSize();
+
+  return <Text>{columns}x{rows}</Text>;
+};
+```
+
+### Responsive Layout
+
+Adapt layout based on terminal width:
+
+```jsx
+import {Box, Text, useWindowSize} from 'ink';
+
+const ResponsiveLayout = () => {
+  const {columns} = useWindowSize();
+  const isNarrow = columns < 80;
+
+  return (
+    <Box flexDirection={isNarrow ? 'column' : 'row'}>
+      <Box borderStyle="round" padding={1} marginRight={isNarrow ? 0 : 2}>
+        <Text>Sidebar</Text>
+      </Box>
+      <Box borderStyle="round" padding={1} flexGrow={1}>
+        <Text>Main content</Text>
+      </Box>
+    </Box>
+  );
+};
+```
+
+### Column Count Adjustment
+
+Adjust number of columns based on width:
+
+```jsx
+import {Box, Text, useWindowSize} from 'ink';
+
+const Grid = ({items}) => {
+  const {columns} = useWindowSize();
+  
+  // Calculate optimal column count
+  const itemWidth = 20;
+  const columnCount = Math.max(1, Math.floor(columns / itemWidth));
+
+  return (
+    <Box flexDirection="column">
+      {items.reduce((rows, item, index) => {
+        const rowIndex = Math.floor(index / columnCount);
+        if (!rows[rowIndex]) {
+          rows[rowIndex] = [];
+        }
+        rows[rowIndex].push(item);
+        return rows;
+      }, []).map((row, i) => (
+        <Box key={i}>
+          {row.map((item, j) => (
+            <Box key={j} width={itemWidth}>
+              <Text>{item}</Text>
+            </Box>
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+```
+
+### Conditional Rendering
+
+Hide elements when terminal is too small:
+
+```jsx
+import {Box, Text, useWindowSize} from 'ink';
+
+const Dashboard = () => {
+  const {columns, rows} = useWindowSize();
+  const showDetails = columns >= 100;
+  const showHelp = rows >= 20;
+
+  return (
+    <Box flexDirection="column">
+      <Box>
+        <Text bold>Dashboard</Text>
+      </Box>
+
+      <Box marginTop={1}>
+        <Text>Essential content</Text>
+      </Box>
+
+      {showDetails && (
+        <Box marginTop={1}>
+          <Text dimColor>Additional details</Text>
+        </Box>
+      )}
+
+      {showHelp && (
+        <Box marginTop={1} borderStyle="round" padding={1}>
+          <Text>Help text</Text>
+        </Box>
+      )}
+
+      {!showDetails && (
+        <Box marginTop={1}>
+          <Text dimColor>Resize terminal for more info</Text>
+        </Box>
+      )}
+    </Box>
+  );
+};
+```
+
+### Text Wrapping
+
+Adjust text width to terminal size:
+
+```jsx
+import {Box, Text, useWindowSize} from 'ink';
+import wrapAnsi from 'wrap-ansi';
+
+const Article = ({content}) => {
+  const {columns} = useWindowSize();
+  
+  // Leave margin on both sides
+  const maxWidth = Math.max(40, columns - 4);
+  const wrapped = wrapAnsi(content, maxWidth);
+
+  return (
+    <Box paddingX={2}>
+      <Text>{wrapped}</Text>
+    </Box>
+  );
+};
+```
+
+### Progress Bar
+
+Scale progress bar to terminal width:
+
+```jsx
+import {Box, Text, useWindowSize} from 'ink';
+
+const ProgressBar = ({progress}) => {
+  const {columns} = useWindowSize();
+  
+  // Reserve space for label and borders
+  const barWidth = Math.max(10, columns - 20);
+  const filled = Math.round((progress / 100) * barWidth);
+  const empty = barWidth - filled;
+
+  return (
+    <Box>
+      <Text>Progress: </Text>
+      <Text>[</Text>
+      <Text color="green">
+        {'█'.repeat(filled)}
+      </Text>
+      <Text dimColor>
+        {'░'.repeat(empty)}
+      </Text>
+      <Text>] {progress}%</Text>
+    </Box>
+  );
+};
+```
+
+### Table with Dynamic Columns
+
+Show/hide table columns based on width:
+
+```jsx
+import {Box, Text, useWindowSize} from 'ink';
+
+const Table = ({data}) => {
+  const {columns} = useWindowSize();
+  
+  // Define column priority
+  const columnConfig = [
+    {key: 'name', label: 'Name', minWidth: 50},
+    {key: 'status', label: 'Status', minWidth: 70},
+    {key: 'date', label: 'Date', minWidth: 90},
+    {key: 'details', label: 'Details', minWidth: 110},
+  ];
+  
+  // Show columns that fit
+  const visibleColumns = columnConfig.filter(col => columns >= col.minWidth);
+
+  return (
+    <Box flexDirection="column">
+      <Box>
+        {visibleColumns.map(col => (
+          <Box key={col.key} width={20}>
+            <Text bold>{col.label}</Text>
+          </Box>
+        ))}
+      </Box>
+      {data.map((row, i) => (
+        <Box key={i}>
+          {visibleColumns.map(col => (
+            <Box key={col.key} width={20}>
+              <Text>{row[col.key]}</Text>
+            </Box>
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+```
+
+### Split View
+
+Adjust split ratio based on terminal size:
+
+```jsx
+import {Box, Text, useWindowSize} from 'ink';
+
+const SplitView = () => {
+  const {columns} = useWindowSize();
+  
+  // Use 50/50 split for wide terminals, single column for narrow
+  const shouldSplit = columns >= 60;
+  const leftWidth = shouldSplit ? Math.floor(columns / 2) : columns;
+
+  return (
+    <Box flexDirection={shouldSplit ? 'row' : 'column'}>
+      <Box width={leftWidth} borderStyle="round" padding={1}>
+        <Text>Left pane</Text>
+      </Box>
+      {shouldSplit && (
+        <Box flexGrow={1} borderStyle="round" padding={1}>
+          <Text>Right pane</Text>
+        </Box>
+      )}
+    </Box>
+  );
+};
+```
+
+### Fullscreen Component
+
+Create a component that fills the terminal:
+
+```jsx
+import {Box, Text, useWindowSize} from 'ink';
+
+const FullScreen = ({children}) => {
+  const {columns, rows} = useWindowSize();
+
+  return (
+    <Box
+      width={columns}
+      height={rows}
+      borderStyle="round"
+      flexDirection="column"
+    >
+      {children}
+    </Box>
+  );
+};
+
+const App = () => (
+  <FullScreen>
+    <Box padding={1}>
+      <Text>This box fills the entire terminal</Text>
+    </Box>
+  </FullScreen>
+);
+```
+
+### Minimum Size Warning
+
+Warn users when terminal is too small:
+
+```jsx
+import {Box, Text, useWindowSize} from 'ink';
+
+const App = () => {
+  const {columns, rows} = useWindowSize();
+  const minColumns = 80;
+  const minRows = 24;
+
+  if (columns < minColumns || rows < minRows) {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <Text color="yellow" bold>Terminal too small</Text>
+        <Text>
+          Current: {columns}x{rows}
+        </Text>
+        <Text>
+          Minimum: {minColumns}x{minRows}
+        </Text>
+        <Text dimColor>
+          Please resize your terminal
+        </Text>
+      </Box>
+    );
+  }
+
+  return <Text>Application content</Text>;
+};
+```
+
+## Resize Behavior
+
+When the terminal window is resized:
+1. The hook detects the change via the stdout 'resize' event
+2. Components using `useWindowSize` automatically re-render
+3. The new `columns` and `rows` values reflect the current size
+4. Ink recalculates layout with the new dimensions
+
+## Notes
+
+<Note>
+  Components re-render automatically when the terminal is resized. You don't need to manually listen for resize events.
+</Note>
+
+<Note>
+  The hook returns the terminal size at the time of render. For most use cases, this is sufficient for responsive layouts.
+</Note>
+
+<Note>
+  Terminal dimensions are measured in character cells, not pixels. One column = one character width, one row = one line height.
+</Note>
+
+<Warning>
+  Avoid heavy computations directly in render when using `useWindowSize`. The component will re-render on every terminal resize, which can be frequent during window dragging.
+</Warning>
+
+## Related Hooks
+
+- [useStdout](/hooks/use-stdout) - Access stdout.columns and stdout.rows (doesn't trigger re-render on resize)
+- [useBoxMetrics](/hooks/use-box-metrics) - Measure rendered box dimensions and positions

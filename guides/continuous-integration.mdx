@@ -1,0 +1,423 @@
+---
+title: Continuous Integration
+description: Run and test your Ink applications in CI environments
+---
+
+Ink automatically adapts its rendering behavior when running in CI environments, ensuring your CLI applications work smoothly in automated pipelines without requiring special configuration.
+
+## Automatic CI Detection
+
+Ink automatically detects CI environments using the `CI` environment variable (which is set by most CI providers) and adapts its behavior accordingly.
+
+When running in CI, Ink:
+
+- Renders only the **final frame** on exit instead of continuously updating
+- Disables ANSI escape sequences for overwriting previous output
+- Skips terminal resize event listeners
+- Disables interactive features (cursor manipulation, synchronized output)
+- Operates in non-interactive mode by default
+
+<Note>
+  Most CI environments don't support the ANSI escape sequences used to overwrite terminal output, so Ink only shows the final state of your app.
+</Note>
+
+## Setting Up CI
+
+Here's an example GitHub Actions workflow for testing an Ink application:
+
+```yaml
+name: test
+on: [push, pull_request]
+jobs:
+  test:
+    name: Node.js ${{ matrix.node_version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node_version:
+          - 24
+          - 22
+          - 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: Use Node.js ${{ matrix.node_version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node_version }}
+      - run: npm install
+      - run: npm test -- --serial
+        env:
+          FORCE_COLOR: true
+          CI: false
+```
+
+<Tip>
+  This is the actual CI configuration from Ink's own repository, testing across Node.js versions 20, 22, and 24.
+</Tip>
+
+## Environment Variables
+
+### FORCE_COLOR
+
+Enable colored output in CI environments:
+
+```yaml
+env:
+  FORCE_COLOR: true
+```
+
+By default, many CI environments disable colored output. Set `FORCE_COLOR=true` to ensure your Ink components' colors are rendered correctly in CI logs.
+
+### CI Variable
+
+Control Ink's CI behavior:
+
+```bash
+# Run in CI mode (non-interactive)
+CI=true node my-cli.js
+
+# Run in interactive mode (full terminal features)
+CI=false node my-cli.js
+```
+
+<Note>
+  Most CI providers automatically set `CI=true`. You only need to set `CI=false` if your CI environment supports full terminal rendering and you want to opt out of the default CI behavior.
+</Note>
+
+### INK_SCREEN_READER
+
+Enable screen reader support in tests:
+
+```yaml
+env:
+  INK_SCREEN_READER: true
+```
+
+Useful for testing accessibility features in your CI pipeline.
+
+## Testing in CI
+
+### Running Tests
+
+Ink applications can be tested in CI just like any other Node.js application:
+
+<Steps>
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+  
+  <Step title="Run tests">
+    ```bash
+    npm test
+    ```
+  </Step>
+  
+  <Step title="Run with serial execution">
+    For test frameworks like AVA, use serial mode to prevent race conditions:
+    ```bash
+    npm test -- --serial
+    ```
+  </Step>
+</Steps>
+
+### Example Test Script
+
+```json
+{
+  "scripts": {
+    "test": "FORCE_COLOR=true ava",
+    "test:ci": "FORCE_COLOR=true CI=false ava --serial"
+  }
+}
+```
+
+## CI-Specific Testing
+
+Test your app's behavior in CI mode:
+
+```jsx
+import {render} from 'ink';
+import {MyApp} from './app.js';
+
+// Simulate CI environment
+process.env.CI = 'true';
+
+const {waitUntilExit} = render(<MyApp />);
+await waitUntilExit();
+
+// Only the final frame is rendered in CI mode
+```
+
+## Testing with renderToString()
+
+Use `renderToString()` for snapshot testing in CI:
+
+```jsx
+import test from 'ava';
+import {renderToString, Text, Box} from 'ink';
+
+test('renders correctly', t => {
+  const output = renderToString(
+    <Box borderStyle="round">
+      <Text color="green">Success!</Text>
+    </Box>
+  );
+  
+  t.snapshot(output);
+});
+```
+
+## Provider-Specific Examples
+
+### GitHub Actions
+
+```yaml
+name: Test
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npm test
+        env:
+          FORCE_COLOR: true
+```
+
+### GitLab CI
+
+```yaml
+test:
+  image: node:20
+  script:
+    - npm ci
+    - npm test
+  variables:
+    FORCE_COLOR: "true"
+```
+
+### CircleCI
+
+```yaml
+version: 2.1
+jobs:
+  test:
+    docker:
+      - image: cimg/node:20.0
+    steps:
+      - checkout
+      - run: npm ci
+      - run:
+          name: Run tests
+          command: npm test
+          environment:
+            FORCE_COLOR: true
+```
+
+### Travis CI
+
+```yaml
+language: node_js
+node_js:
+  - '20'
+  - '22'
+  - '24'
+script:
+  - npm test
+env:
+  - FORCE_COLOR=true
+```
+
+## Building and Publishing
+
+### Build Step
+
+If you're using TypeScript, add a build step:
+
+```yaml
+steps:
+  - uses: actions/checkout@v6
+  - uses: actions/setup-node@v4
+    with:
+      node-version: '20'
+  - run: npm ci
+  - run: npm run build  # Compile TypeScript
+  - run: npm test
+```
+
+### Publishing to npm
+
+```yaml
+name: Publish
+on:
+  release:
+    types: [created]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+## Opting Out of CI Mode
+
+If your CI environment supports full terminal rendering (like some self-hosted runners), you can opt out of CI mode:
+
+```yaml
+steps:
+  - run: npm test
+    env:
+      CI: false
+      FORCE_COLOR: true
+```
+
+This enables:
+- Continuous output updates
+- ANSI escape sequences
+- Terminal resize handling
+- Full interactive features
+
+<Tip>
+  Use `CI=false` when running integration tests that need to verify progressive rendering or animation behavior.
+</Tip>
+
+## Debugging CI Failures
+
+### Enable Debug Mode
+
+Render each update as separate output for debugging:
+
+```jsx
+import {render} from 'ink';
+
+render(<MyApp />, {
+  debug: true  // Each update renders separately
+});
+```
+
+### Capture Output
+
+Save the final output to a file:
+
+```bash
+node my-cli.js > output.txt 2>&1
+```
+
+### Test Locally
+
+Simulate CI environment locally:
+
+```bash
+CI=true npm test
+```
+
+## Best Practices
+
+<Tip>
+  Always test your Ink application locally with `CI=true` before pushing to verify it works in non-interactive mode.
+</Tip>
+
+- **Set FORCE_COLOR=true** - Preserve colored output in CI logs
+- **Use serial test execution** - Prevent race conditions with parallel tests
+- **Test with renderToString()** - Use synchronous rendering for predictable tests
+- **Keep tests fast** - Avoid long-running animations in CI tests
+- **Use debug mode** - Enable `debug: true` when troubleshooting CI failures
+- **Test multiple Node versions** - Use a matrix strategy to test across versions
+- **Cache dependencies** - Speed up CI by caching `node_modules`
+
+### Caching Dependencies
+
+```yaml
+steps:
+  - uses: actions/checkout@v6
+  - uses: actions/setup-node@v4
+    with:
+      node-version: '20'
+      cache: 'npm'
+  - run: npm ci
+  - run: npm test
+```
+
+## Interactive Mode Override
+
+Manually control interactive mode:
+
+```jsx
+import {render} from 'ink';
+
+render(<MyApp />, {
+  interactive: false  // Force non-interactive mode
+});
+```
+
+This is useful for:
+- Testing non-interactive behavior
+- Running in environments without TTY
+- Piped output (`my-cli | grep something`)
+
+## Common Issues
+
+### Tests Timing Out
+
+If tests hang in CI:
+
+```jsx
+import {render} from 'ink';
+
+const {waitUntilExit} = render(<MyApp />);
+
+// Add a timeout
+const timeout = setTimeout(() => {
+  console.error('Test timed out');
+  process.exit(1);
+}, 5000);
+
+await waitUntilExit();
+clearTimeout(timeout);
+```
+
+### Color Stripping
+
+If colors are being stripped, ensure `FORCE_COLOR` is set:
+
+```bash
+FORCE_COLOR=true npm test
+```
+
+### Snapshot Mismatches
+
+If snapshots differ between local and CI:
+
+1. Set `FORCE_COLOR` consistently
+2. Use `strip-ansi` to remove color codes from assertions
+3. Set a fixed `columns` width in tests
+
+```jsx
+import stripAnsi from 'strip-ansi';
+import {renderToString} from 'ink';
+
+const output = renderToString(<MyComponent />, {columns: 80});
+expect(stripAnsi(output)).toBe('Expected output');
+```
+
+## Related Resources
+
+- [Testing Guide](/guides/testing) - Learn how to test Ink components
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [Ink's CI Configuration](https://github.com/vadimdemedes/ink/blob/main/.github/workflows/test.yml)

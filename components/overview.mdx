@@ -1,0 +1,120 @@
+---
+title: Built-in Components
+description: Overview of Ink's core components for building CLI interfaces
+---
+
+Ink provides a set of built-in components that serve as the foundation for creating beautiful command-line interfaces. These components are inspired by HTML/CSS and work together using Flexbox layouts.
+
+## Core Components
+
+Ink's component library is intentionally minimal, providing just the essential building blocks you need:
+
+<CardGroup cols={2}>
+  <Card title="Text" icon="font" href="/components/text">
+    Display and style text with colors, bold, italic, underline, and more
+  </Card>
+  
+  <Card title="Box" icon="square" href="/components/box">
+    Container component for Flexbox layouts, similar to `<div>` in HTML
+  </Card>
+  
+  <Card title="Static" icon="list" href="/components/static">
+    Render permanent output above your dynamic content, perfect for logs
+  </Card>
+  
+  <Card title="Transform" icon="wand-magic-sparkles" href="/components/transform">
+    Transform string output before rendering, for gradients and effects
+  </Card>
+  
+  <Card title="Newline" icon="turn-down" href="/components/newline">
+    Insert one or more newline characters within text
+  </Card>
+  
+  <Card title="Spacer" icon="arrows-left-right" href="/components/spacer">
+    Flexible space that expands to fill available space
+  </Card>
+</CardGroup>
+
+## Design Philosophy
+
+Ink's components follow these principles:
+
+### React-First
+
+All components are React components that work just like their browser counterparts. If you know React, you already know Ink.
+
+```jsx
+import React from 'react';
+import {render, Text, Box} from 'ink';
+
+const App = () => (
+  <Box flexDirection="column">
+    <Text color="green">Hello World</Text>
+  </Box>
+);
+
+render(<App />);
+```
+
+### Flexbox Layouts
+
+Every element uses Flexbox for layout, powered by [Yoga](https://github.com/facebook/yoga). Think of every component as having `display: flex` by default.
+
+```jsx
+<Box justifyContent="space-between">
+  <Text>Left</Text>
+  <Text>Right</Text>
+</Box>
+```
+
+### Text Wrapping
+
+All text must be wrapped in a `<Text>` component. This ensures proper styling and layout calculations.
+
+```jsx
+{/* ✅ Correct */}
+<Box>
+  <Text>Hello</Text>
+</Box>
+
+{/* ❌ Wrong */}
+<Box>
+  Hello
+</Box>
+```
+
+## Component Composition
+
+Components are designed to be composed together:
+
+```jsx
+import {Box, Text, Spacer} from 'ink';
+
+const Header = () => (
+  <Box borderStyle="round" padding={1}>
+    <Text bold>My App</Text>
+    <Spacer />
+    <Text dimColor>v1.0.0</Text>
+  </Box>
+);
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Text Styling" href="/components/text">
+    Learn how to style and format text output
+  </Card>
+  
+  <Card title="Layout with Box" href="/components/box">
+    Master Flexbox layouts in the terminal
+  </Card>
+  
+  <Card title="Core Concepts" href="/concepts/flexbox-layouts">
+    Understand Ink's layout system
+  </Card>
+  
+  <Card title="Examples" href="/examples/overview">
+    See real-world component usage
+  </Card>
+</CardGroup>

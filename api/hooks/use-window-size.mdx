@@ -1,0 +1,44 @@
+---
+title: useWindowSize
+description: Hook for getting terminal window dimensions
+---
+
+A React hook that returns the current terminal window dimensions and re-renders the component whenever the terminal is resized.
+
+## Signature
+
+```typescript
+const useWindowSize = () => WindowSize
+```
+
+## Parameters
+
+This hook takes no parameters.
+
+## Return Value
+
+Returns a `WindowSize` object with the current terminal dimensions.
+
+<ResponseField name="columns" type="number">
+  Number of columns (horizontal character cells).
+</ResponseField>
+
+<ResponseField name="rows" type="number">
+  Number of rows (vertical character cells).
+</ResponseField>
+
+## Example
+
+```tsx
+import {useWindowSize, Text} from 'ink';
+
+const Example = () => {
+  const {columns, rows} = useWindowSize();
+
+  return (
+    <Text>
+      Terminal size: {columns} x {rows}
+    </Text>
+  );
+};
+```

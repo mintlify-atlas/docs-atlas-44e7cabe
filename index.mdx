@@ -1,97 +1,75 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Ink Documentation"
+description: "React for interactive command-line applications"
 ---
 
-## Setting up
+<div className="flex flex-col items-center justify-center text-center py-12">
+  <h1 className="text-6xl font-bold mb-4" style={{color: '#242b2c'}}>
+    Ink
+  </h1>
+  <p className="text-2xl mb-8 text-gray-600">
+    React for CLIs. Build and test your CLI output using components.
+  </p>
+</div>
 
-Get your documentation site up and running in minutes.
+## Why Ink?
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+Ink provides the same component-based UI building experience that React offers in the browser, but for command-line apps. It uses Yoga to build Flexbox layouts in the terminal, so most CSS-like properties are available in Ink as well.
 
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="React-Based" icon="react" iconType="duotone">
+    Use familiar React concepts like components, hooks, and state management to build CLI applications
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Flexbox Layouts" icon="table-layout" iconType="duotone">
+    Build flexible, responsive terminal UIs with Yoga's Flexbox layout engine
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="TypeScript Support" icon="code" iconType="duotone">
+    Full TypeScript support with comprehensive type definitions for all components and hooks
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Testing Utilities" icon="vial" iconType="duotone">
+    Built-in testing utilities to validate your CLI output and behavior
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Get Started
 
-Everything you need to create world-class documentation.
+Start building beautiful CLI applications in minutes.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+<CardGroup cols={3}>
+  <Card title="Introduction" icon="book-open" href="/introduction">
+    Learn about Ink and what makes it special
   </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
+  <Card title="Installation" icon="download" href="/installation">
+    Install Ink and set up your development environment
   </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Build your first Ink application in minutes
   </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+</CardGroup>
 
-## Need inspiration?
+## Core Features
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+Everything you need to build professional CLI applications.
+
+<CardGroup cols={2}>
+  <Card title="Components" icon="boxes-stacked" href="/components/overview">
+    Built-in components for text, boxes, layouts, and more
+  </Card>
+  <Card title="Hooks" icon="link" href="/hooks/overview">
+    Powerful hooks for input, focus, streams, and window management
+  </Card>
+  <Card title="API Reference" icon="code-branch" href="/api/render">
+    Complete API documentation for all exports and types
+  </Card>
+  <Card title="Examples" icon="lightbulb" href="/examples/overview">
+    Real-world examples to help you get started
+  </Card>
+</CardGroup>
+
+## Who Uses Ink?
+
+Trusted by leading companies and open-source projects worldwide.
+
+<Note>
+Ink powers CLI tools from **GitHub Copilot**, **Cloudflare**, **Gatsby**, **Linear**, **Prisma**, **Shopify**, and many more.
+</Note>

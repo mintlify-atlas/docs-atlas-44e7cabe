@@ -1,0 +1,283 @@
+---
+title: Testing
+description: Learn how to test Ink components and CLI applications
+---
+
+Ink provides multiple approaches for testing your CLI components, from simple synchronous rendering to full integration testing with ink-testing-library.
+
+## Using renderToString()
+
+The `renderToString()` function renders a React element synchronously and returns the output as a string. This is perfect for snapshot testing and simple assertions.
+
+### Basic Usage
+
+```jsx
+import {renderToString, Text, Box} from 'ink';
+
+const output = renderToString(
+  <Box padding={1}>
+    <Text color="green">Hello World</Text>
+  </Box>,
+  {columns: 40}
+);
+
+console.log(output);
+// Output: "  Hello World  "
+```
+
+### Testing Components
+
+Here's a practical example of testing an Ink component:
+
+```jsx
+import test from 'ava';
+import {renderToString, Text, Box} from 'ink';
+
+test('renders greeting', t => {
+  const output = renderToString(<Text>Hello World</Text>);
+  t.is(output, 'Hello World');
+});
+
+test('wraps text correctly', t => {
+  const output = renderToString(
+    <Box width={7}>
+      <Text wrap="wrap">Hello World</Text>
+    </Box>
+  );
+  
+  t.is(output, 'Hello\nWorld');
+});
+
+test('truncates text', t => {
+  const output = renderToString(
+    <Box width={7}>
+      <Text wrap="truncate">Hello World</Text>
+    </Box>
+  );
+  
+  t.is(output, 'Hello …');
+});
+```
+
+### Options
+
+The `renderToString()` function accepts options to configure the rendering:
+
+```jsx
+const output = renderToString(<MyComponent />, {
+  columns: 80  // Width of the virtual terminal (default: 80)
+});
+```
+
+<Note>
+  `renderToString()` does not write to stdout or set up terminal event listeners. It's purely for getting the rendered output as a string.
+</Note>
+
+## Testing with Variables
+
+Test components with dynamic content:
+
+```jsx
+import test from 'ava';
+import {renderToString, Text} from 'ink';
+
+test('renders with variable', t => {
+  const count = 42;
+  const output = renderToString(<Text>Count: {count}</Text>);
+  t.is(output, 'Count: 42');
+});
+
+test('renders multiple text nodes', t => {
+  const output = renderToString(
+    <Text>
+      {'Hello'}
+      {' World'}
+    </Text>
+  );
+  
+  t.is(output, 'Hello World');
+});
+```
+
+## Testing Nested Components
+
+```jsx
+import test from 'ava';
+import {renderToString, Text} from 'ink';
+
+function World() {
+  return <Text>World</Text>;
+}
+
+test('renders nested component', t => {
+  const output = renderToString(
+    <Text>
+      Hello <World />
+    </Text>
+  );
+  
+  t.is(output, 'Hello World');
+});
+```
+
+## Behavior Notes
+
+<Tip>
+  Terminal-specific hooks like `useInput`, `useStdin`, `useStdout`, `useStderr`, `useApp`, `useFocus`, and `useFocusManager` return default no-op values in `renderToString()` since there's no terminal session.
+</Tip>
+
+### Effect Timing
+
+- **`useEffect` callbacks** execute during rendering due to synchronous mode, but state updates they trigger won't affect the returned output
+- **`useLayoutEffect` callbacks** fire synchronously during commit, so their state updates **will** be reflected in the output
+- **`<Static>` component** is supported and its output is prepended to the dynamic output
+
+### Error Handling
+
+If a component throws during rendering, the error propagates to the caller after cleanup:
+
+```jsx
+import test from 'ava';
+import {renderToString, Text} from 'ink';
+
+function BrokenComponent() {
+  throw new Error('Component error');
+}
+
+test('handles component errors', t => {
+  t.throws(() => {
+    renderToString(<BrokenComponent />);
+  }, {message: 'Component error'});
+});
+```
+
+## Using ink-testing-library
+
+For more advanced testing scenarios, use [ink-testing-library](https://github.com/vadimdemedes/ink-testing-library), which provides a full testing API:
+
+```jsx
+import React from 'react';
+import {Text} from 'ink';
+import {render} from 'ink-testing-library';
+
+const Test = () => <Text>Hello World</Text>;
+const {lastFrame} = render(<Test />);
+
+lastFrame() === 'Hello World'; //=> true
+```
+
+### Installation
+
+<Steps>
+  <Step title="Install the library">
+    ```bash
+    npm install --save-dev ink-testing-library
+    ```
+  </Step>
+  
+  <Step title="Write your tests">
+    ```jsx
+    import {render} from 'ink-testing-library';
+    import {Text} from 'ink';
+    
+    const {lastFrame, stdin} = render(<MyComponent />);
+    ```
+  </Step>
+  
+  <Step title="Make assertions">
+    ```jsx
+    // Check output
+    expect(lastFrame()).toBe('Expected output');
+    
+    // Simulate input
+    stdin.write('x');
+    ```
+  </Step>
+</Steps>
+
+## Testing with ANSI Codes
+
+When testing styled output, you may need to strip or handle ANSI escape codes:
+
+```jsx
+import test from 'ava';
+import stripAnsi from 'strip-ansi';
+import {renderToString, Text, Box} from 'ink';
+
+test('renders with color', t => {
+  const output = renderToString(
+    <Text color="green">Success</Text>
+  );
+  
+  // Strip ANSI codes for assertion
+  t.is(stripAnsi(output), 'Success');
+  
+  // Or test that it contains ANSI codes
+  t.true(output.includes('\x1b['));
+});
+```
+
+## Best Practices
+
+<Tip>
+  Use `renderToString()` for simple component output testing and ink-testing-library for interactive components that use hooks like `useInput`.
+</Tip>
+
+- **Snapshot testing**: Use `renderToString()` with your test runner's snapshot feature
+- **Strip ANSI codes**: Use `strip-ansi` when testing plain text output
+- **Test edge cases**: Test with different terminal widths using the `columns` option
+- **Mock hooks**: Terminal hooks return no-ops in tests, so mock them if needed
+- **Async updates**: For concurrent mode, use ink-testing-library's async utilities
+
+## Example Test Suite
+
+Here's a complete example from Ink's own test suite:
+
+```jsx
+import test from 'ava';
+import {renderToString, Text, Box} from 'ink';
+
+test('text', t => {
+  const output = renderToString(<Text>Hello World</Text>);
+  t.is(output, 'Hello World');
+});
+
+test('wrap text', t => {
+  const output = renderToString(
+    <Box width={7}>
+      <Text wrap="wrap">Hello World</Text>
+    </Box>
+  );
+  
+  t.is(output, 'Hello\nWorld');
+});
+
+test('truncate text in the end', t => {
+  const output = renderToString(
+    <Box width={7}>
+      <Text wrap="truncate">Hello World</Text>
+    </Box>
+  );
+  
+  t.is(output, 'Hello …');
+});
+
+test('ignore empty text node', t => {
+  const output = renderToString(
+    <Box flexDirection="column">
+      <Box>
+        <Text>Hello World</Text>
+      </Box>
+      <Text>{''}</Text>
+    </Box>
+  );
+  
+  t.is(output, 'Hello World');
+});
+```
+
+## Next Steps
+
+- Check out [ink-testing-library documentation](https://github.com/vadimdemedes/ink-testing-library) for advanced testing
+- Learn about [Continuous Integration](/guides/continuous-integration) setup for your Ink app
+- Explore [React Devtools](/guides/devtools) for debugging during development

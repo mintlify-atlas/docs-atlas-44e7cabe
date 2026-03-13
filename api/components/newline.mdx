@@ -1,0 +1,126 @@
+---
+title: Newline
+description: Insert newline characters in text
+---
+
+Adds one or more newline (`\n`) characters. Must be used within `<Text>` components.
+
+## Component Signature
+
+```tsx
+import {Text, Newline} from 'ink';
+
+function Component() {
+  return (
+    <Text>
+      First line
+      <Newline />
+      Second line
+    </Text>
+  );
+}
+```
+
+## Props
+
+<ParamField path="count" type="number" default={1}>
+  Number of newlines to insert.
+</ParamField>
+
+## Examples
+
+### Single Newline
+
+```tsx
+import {Text, Newline} from 'ink';
+
+function Example() {
+  return (
+    <Text>
+      First line
+      <Newline />
+      Second line
+    </Text>
+  );
+}
+// Output:
+// First line
+// Second line
+```
+
+### Multiple Newlines
+
+```tsx
+import {Text, Newline} from 'ink';
+
+function Example() {
+  return (
+    <Text>
+      First line
+      <Newline count={3} />
+      Fourth line
+    </Text>
+  );
+}
+// Output:
+// First line
+//
+//
+// Fourth line
+```
+
+### In Paragraphs
+
+```tsx
+import {Text, Newline} from 'ink';
+
+function Example() {
+  return (
+    <Text>
+      This is the first paragraph.
+      <Newline count={2} />
+      This is the second paragraph.
+      <Newline count={2} />
+      This is the third paragraph.
+    </Text>
+  );
+}
+```
+
+### Dynamic Newlines
+
+```tsx
+import {Text, Newline} from 'ink';
+
+function Example({spacing = 1}: {spacing?: number}) {
+  return (
+    <Text>
+      Header
+      <Newline count={spacing} />
+      Content
+    </Text>
+  );
+}
+```
+
+### With Styled Text
+
+```tsx
+import {Text, Newline} from 'ink';
+
+function Example() {
+  return (
+    <Text color="green">
+      Success!
+      <Newline />
+      Operation completed.
+    </Text>
+  );
+}
+```
+
+## Important Notes
+
+- `<Newline>` must be used within a `<Text>` component.
+- It's equivalent to inserting `\n` characters directly in your text.
+- Use the `count` prop to insert multiple newlines at once.

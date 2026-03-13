@@ -1,0 +1,173 @@
+---
+title: Transform
+description: Transform the string representation of React components before output
+---
+
+Transform a string representation of React components before they're written to output. For example, you might want to apply a gradient to text, add a clickable link, or create some text effects. These use cases can't accept React nodes as input; they expect a string. That's what the `<Transform>` component does: it gives you an output string of its child components and lets you transform it in any way.
+
+## Component Signature
+
+```tsx
+import {Transform} from 'ink';
+
+function Component() {
+  return (
+    <Transform transform={(output, index) => output.toUpperCase()}>
+      <Text>Hello World</Text>
+    </Transform>
+  );
+}
+```
+
+## Props
+
+<ParamField path="transform" type="(children: string, index: number) => string" required>
+  Function that transforms children output. It accepts children and must return transformed children as well.
+  
+  **Note:** When children use `<Text>` styling props (e.g. `color`, `bold`), the string will contain ANSI escape codes.
+  
+  **Parameters:**
+  - `children: string` - The string representation of the child components
+  - `index: number` - The index of the transform operation
+</ParamField>
+
+<ParamField path="accessibilityLabel" type="string">
+  Screen-reader-specific text to output. If this is set, all children will be ignored.
+</ParamField>
+
+<ParamField path="children" type="ReactNode">
+  The React components to transform.
+</ParamField>
+
+## Examples
+
+### Convert to Uppercase
+
+```tsx
+import {Transform, Text} from 'ink';
+
+function Example() {
+  return (
+    <Transform transform={(output) => output.toUpperCase()}>
+      <Text>hello world</Text>
+    </Transform>
+  );
+}
+// Output: HELLO WORLD
+```
+
+### Add Prefix and Suffix
+
+```tsx
+import {Transform, Text} from 'ink';
+
+function Example() {
+  return (
+    <Transform transform={(output) => `>>> ${output} <<<`}>
+      <Text>Important Message</Text>
+    </Transform>
+  );
+}
+// Output: >>> Important Message <<<
+```
+
+### Apply Gradient
+
+```tsx
+import {Transform, Text} from 'ink';
+import gradient from 'gradient-string';
+
+function Example() {
+  return (
+    <Transform transform={(output) => gradient.rainbow(output)}>
+      <Text>Rainbow Text!</Text>
+    </Transform>
+  );
+}
+```
+
+### Create Clickable Links
+
+```tsx
+import {Transform, Text} from 'ink';
+import terminalLink from 'terminal-link';
+
+function Example() {
+  return (
+    <Transform
+      transform={(output) => terminalLink(output, 'https://example.com')}
+    >
+      <Text>Click here</Text>
+    </Transform>
+  );
+}
+```
+
+### Transform with Index
+
+```tsx
+import {Box, Transform, Text} from 'ink';
+
+function Example() {
+  return (
+    <Box flexDirection="column">
+      {['First', 'Second', 'Third'].map((item, i) => (
+        <Transform key={i} transform={(output, index) => `${index + 1}. ${output}`}>
+          <Text>{item}</Text>
+        </Transform>
+      ))}
+    </Box>
+  );
+}
+// Output:
+// 1. First
+// 2. Second
+// 3. Third
+```
+
+### Handling ANSI Codes
+
+```tsx
+import {Transform, Text} from 'ink';
+import stripAnsi from 'strip-ansi';
+
+function Example() {
+  return (
+    <Transform
+      transform={(output) => {
+        // Strip ANSI codes before transforming
+        const plain = stripAnsi(output);
+        return `[${plain.length} chars] ${output}`;
+      }}
+    >
+      <Text color="green" bold>
+        Styled text
+      </Text>
+    </Transform>
+  );
+}
+```
+
+### Accessibility Support
+
+```tsx
+import {Transform, Text} from 'ink';
+import gradient from 'gradient-string';
+
+function Example() {
+  return (
+    <Transform
+      transform={(output) => gradient.rainbow(output)}
+      accessibilityLabel="Rainbow colored welcome message"
+    >
+      <Text>Welcome!</Text>
+    </Transform>
+  );
+}
+```
+
+## Important Notes
+
+- The transform function receives a string that may contain ANSI escape codes if the children use `<Text>` styling props.
+- Use libraries like `strip-ansi` if you need to work with the plain text content.
+- When `accessibilityLabel` is set and a screen reader is enabled, the transform function will not be applied and the accessibility label will be output instead.

@@ -1,0 +1,503 @@
+---
+title: Progress Indicators
+description: Build progress bars, spinners, and dynamic loading states
+---
+
+Learn how to create visual progress indicators, loading states, and real-time status updates in your Ink applications.
+
+## Jest Test Runner Example
+
+This example from `examples/jest/jest.tsx` demonstrates a complete test runner UI with progress tracking:
+
+```tsx
+import React from 'react';
+import PQueue from 'p-queue';
+import delay from 'delay';
+import ms from 'ms';
+import {Static, Box, render} from 'ink';
+import Summary from './summary.jsx';
+import Test from './test.js';
+
+const paths = [
+  'tests/login.js',
+  'tests/signup.js',
+  'tests/forgot-password.js',
+  'tests/reset-password.js',
+  'tests/view-profile.js',
+  'tests/edit-profile.js',
+  'tests/delete-profile.js',
+  'tests/posts.js',
+  'tests/post.js',
+  'tests/comments.js',
+];
+
+class Jest extends React.Component {
+  constructor(properties) {
+    super(properties);
+
+    this.state = {
+      startTime: Date.now(),
+      completedTests: [],
+      runningTests: [],
+    };
+  }
+
+  render() {
+    const {startTime, completedTests, runningTests} = this.state;
+
+    return (
+      <Box flexDirection="column">
+        <Static items={completedTests}>
+          {test => (
+            <Test key={test.path} status={test.status} path={test.path} />
+          )}
+        </Static>
+
+        {runningTests.length > 0 && (
+          <Box flexDirection="column" marginTop={1}>
+            {runningTests.map(test => (
+              <Test key={test.path} status={test.status} path={test.path} />
+            ))}
+          </Box>
+        )}
+
+        <Summary
+          isFinished={runningTests.length === 0}
+          passed={completedTests.filter(test => test.status === 'pass').length}
+          failed={completedTests.filter(test => test.status === 'fail').length}
+          time={ms(Date.now() - startTime)}
+        />
+      </Box>
+    );
+  }
+
+  componentDidMount() {
+    const queue = new PQueue({concurrency: 4});
+
+    for (const path of paths) {
+      void queue.add(this.runTest.bind(this, path));
+    }
+  }
+
+  async runTest(path) {
+    this.setState(previousState => ({
+      runningTests: [
+        ...previousState.runningTests,
+        {
+          status: 'runs',
+          path,
+        },
+      ],
+    }));
+
+    await delay(1000 * Math.random());
+
+    this.setState(previousState => ({
+      runningTests: previousState.runningTests.filter(
+        test => test.path !== path,
+      ),
+      completedTests: [
+        ...previousState.completedTests,
+        {
+          status: Math.random() < 0.5 ? 'pass' : 'fail',
+          path,
+        },
+      ],
+    }));
+  }
+}
+
+render(<Jest />);
+```
+
+### Test Status Component
+
+From `examples/jest/test.tsx`:
+
+```tsx
+import React from 'react';
+import {Box, Text} from 'ink';
+
+const getBackgroundForStatus = (status) => {
+  switch (status) {
+    case 'runs': {
+      return 'yellow';
+    }
+    case 'pass': {
+      return 'green';
+    }
+    case 'fail': {
+      return 'red';
+    }
+    default: {
+      return undefined;
+    }
+  }
+};
+
+function Test({status, path}) {
+  return (
+    <Box>
+      <Text color="black" backgroundColor={getBackgroundForStatus(status)}>
+        {` ${status.toUpperCase()} `}
+      </Text>
+
+      <Box marginLeft={1}>
+        <Text dimColor>{path.split('/')[0]}/</Text>
+
+        <Text bold color="white">
+          {path.split('/')[1]}
+        </Text>
+      </Box>
+    </Box>
+  );
+}
+
+export default Test;
+```
+
+### Summary Component
+
+From `examples/jest/summary.tsx`:
+
+```tsx
+import React from 'react';
+import {Box, Text} from 'ink';
+
+function Summary({isFinished, passed, failed, time}) {
+  return (
+    <Box flexDirection="column" marginTop={1}>
+      <Box>
+        <Box width={14}>
+          <Text bold>Test Suites:</Text>
+        </Box>
+        {failed > 0 && (
+          <Text bold color="red">
+            {failed} failed,{' '}
+          </Text>
+        )}
+        {passed > 0 && (
+          <Text bold color="green">
+            {passed} passed,{' '}
+          </Text>
+        )}
+        <Text>{passed + failed} total</Text>
+      </Box>
+
+      <Box>
+        <Box width={14}>
+          <Text bold>Time:</Text>
+        </Box>
+        <Text>{time}</Text>
+      </Box>
+
+      {isFinished ? (
+        <Box>
+          <Text dimColor>Ran all test suites.</Text>
+        </Box>
+      ) : null}
+    </Box>
+  );
+}
+
+export default Summary;
+```
+
+## Key Concepts
+
+### Static Component
+
+The `<Static>` component is essential for progress indicators. It prevents completed items from re-rendering:
+
+```tsx
+<Static items={completedTests}>
+  {test => (
+    <Test key={test.path} status={test.status} path={test.path} />
+  )}
+</Static>
+```
+
+**Why use Static?**
+- Completed items are rendered once and never updated
+- Only running items re-render on state changes
+- Significantly improves performance with large lists
+- Prevents flickering of completed items
+
+### Progress States
+
+Track multiple states for progress:
+
+```tsx
+state = {
+  completedTests: [],  // Finished tests (static)
+  runningTests: [],    // Currently running (dynamic)
+  startTime: Date.now(), // For elapsed time
+};
+```
+
+### Concurrent Execution
+
+Run multiple tasks in parallel:
+
+```tsx
+import PQueue from 'p-queue';
+
+const queue = new PQueue({concurrency: 4});
+
+for (const path of paths) {
+  void queue.add(this.runTest.bind(this, path));
+}
+```
+
+### Color-Coded Status
+
+Use background colors for visual status:
+
+```tsx
+const getBackgroundForStatus = (status) => {
+  switch (status) {
+    case 'runs': return 'yellow';
+    case 'pass': return 'green';
+    case 'fail': return 'red';
+  }
+};
+
+<Text backgroundColor={getBackgroundForStatus(status)}>
+  {status.toUpperCase()}
+</Text>
+```
+
+## Incremental Rendering Example
+
+From `examples/incremental-rendering/incremental-rendering.tsx`, this example shows high-performance updates:
+
+```tsx
+import React, {useState, useEffect} from 'react';
+import {render, Text, Box, useInput} from 'ink';
+
+function IncrementalRendering() {
+  const [progress1, setProgress1] = useState(0);
+  const [progress2, setProgress2] = useState(0);
+  const [progress3, setProgress3] = useState(0);
+  const [fps, setFps] = useState(0);
+
+  // Rapid updates every 16ms (~60fps)
+  useEffect(() => {
+    let frameCount = 0;
+    let lastTime = Date.now();
+
+    const timer = setInterval(() => {
+      setProgress1(previous => (previous + 1) % 101);
+      setProgress2(previous => (previous + 2) % 101);
+      setProgress3(previous => (previous + 3) % 101);
+
+      // Calculate FPS
+      frameCount++;
+      const now = Date.now();
+      if (now - lastTime >= 1000) {
+        setFps(frameCount);
+        frameCount = 0;
+        lastTime = now;
+      }
+    }, 16);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const progressBar = (value) => {
+    const filled = Math.floor(value / 5);
+    const empty = 20 - filled;
+    return '█'.repeat(filled) + '░'.repeat(empty);
+  };
+
+  return (
+    <Box flexDirection="column">
+      <Text bold color="cyan">
+        Incremental Rendering Demo - FPS: {fps}
+      </Text>
+      
+      <Text>
+        Progress 1: <Text color="green">{progressBar(progress1)}</Text> {progress1}%
+      </Text>
+      <Text>
+        Progress 2: <Text color="yellow">{progressBar(progress2)}</Text> {progress2}%
+      </Text>
+      <Text>
+        Progress 3: <Text color="red">{progressBar(progress3)}</Text> {progress3}%
+      </Text>
+    </Box>
+  );
+}
+
+render(<IncrementalRendering />, {incrementalRendering: true});
+```
+
+**Key features:**
+- Updates every 16ms for smooth animations
+- Tracks FPS to show rendering performance
+- Uses Unicode block characters for progress bars
+- Enable with `incrementalRendering: true` option
+
+## Suspense Loading Example
+
+From `examples/suspense/suspense.tsx`:
+
+```tsx
+import React from 'react';
+import {render, Text} from 'ink';
+
+let promise;
+let state;
+let value;
+
+const read = () => {
+  if (!promise) {
+    promise = new Promise(resolve => {
+      setTimeout(resolve, 500);
+    });
+
+    state = 'pending';
+
+    (async () => {
+      await promise;
+      state = 'done';
+      value = 'Hello World';
+    })();
+  }
+
+  if (state === 'pending') {
+    throw promise;
+  }
+
+  if (state === 'done') {
+    return value;
+  }
+};
+
+function Example() {
+  const message = read();
+  return <Text>{message}</Text>;
+}
+
+function Fallback() {
+  return <Text>Loading...</Text>;
+}
+
+render(
+  <React.Suspense fallback={<Fallback />}>
+    <Example />
+  </React.Suspense>,
+);
+```
+
+## Progress Bar Patterns
+
+### Simple Percentage Bar
+
+```tsx
+function ProgressBar({percent}) {
+  const filled = Math.floor(percent / 5);
+  const empty = 20 - filled;
+  
+  return (
+    <Box>
+      <Text>
+        [{'█'.repeat(filled)}{'░'.repeat(empty)}] {percent}%
+      </Text>
+    </Box>
+  );
+}
+```
+
+### Spinner
+
+```tsx
+function Spinner() {
+  const [frame, setFrame] = useState(0);
+  const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setFrame(prev => (prev + 1) % frames.length);
+    }, 80);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  return <Text color="cyan">{frames[frame]}</Text>;
+}
+```
+
+### Multi-Step Progress
+
+```tsx
+function MultiStepProgress({steps, currentStep}) {
+  return (
+    <Box flexDirection="column">
+      {steps.map((step, index) => {
+        const isDone = index < currentStep;
+        const isCurrent = index === currentStep;
+        const icon = isDone ? '✓' : isCurrent ? '●' : '○';
+        const color = isDone ? 'green' : isCurrent ? 'blue' : 'gray';
+        
+        return (
+          <Box key={step}>
+            <Text color={color}>{icon} {step}</Text>
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
+```
+
+### Download Progress
+
+```tsx
+function DownloadProgress({downloaded, total}) {
+  const percent = Math.round((downloaded / total) * 100);
+  const mbDownloaded = (downloaded / 1024 / 1024).toFixed(1);
+  const mbTotal = (total / 1024 / 1024).toFixed(1);
+  
+  const filled = Math.floor(percent / 2);
+  const empty = 50 - filled;
+  
+  return (
+    <Box flexDirection="column">
+      <Text>
+        {'█'.repeat(filled)}{'░'.repeat(empty)}
+      </Text>
+      <Text>
+        {mbDownloaded} MB / {mbTotal} MB ({percent}%)
+      </Text>
+    </Box>
+  );
+}
+```
+
+## Running the Examples
+
+```bash
+# Jest test runner
+npm run example examples/jest
+
+# Incremental rendering
+npm run example examples/incremental-rendering
+
+# Suspense
+npm run example examples/suspense
+```
+
+## Performance Tips
+
+1. **Use Static for completed items** - Prevents unnecessary re-renders
+2. **Enable incremental rendering** - For apps with frequent updates (>60fps)
+3. **Batch state updates** - Update multiple values in one setState call
+4. **Throttle updates** - Don't update progress more than 30-60 times per second
+5. **Use React.memo** - For expensive list items
+
+## Next Steps
+
+<Card title="Static Component" icon="code" href="/components/static">
+  API reference for Static component
+</Card>

@@ -1,0 +1,348 @@
+---
+title: Text Styling
+description: Styling text with colors, formatting, and wrapping modes
+---
+
+## Overview
+
+The `<Text>` component is the only way to display text in Ink. It provides powerful styling options including colors, text formatting (bold, italic, underline), and wrapping behavior.
+
+<Warning>
+All text must be wrapped in a `<Text>` component. `<Text>` can only contain text nodes and nested `<Text>` components - no `<Box>` components are allowed inside.
+</Warning>
+
+## Basic Usage
+
+```jsx
+import {render, Text} from 'ink';
+
+const Example = () => (
+  <>
+    <Text>Plain text</Text>
+    <Text color="green">Colored text</Text>
+    <Text bold>Bold text</Text>
+  </>
+);
+
+render(<Example />);
+```
+
+## Colors
+
+Ink uses [Chalk](https://github.com/chalk/chalk) under the hood, so all Chalk color functionality is supported.
+
+### Foreground Colors
+
+```jsx
+{/* Named colors */}
+<Text color="green">Green text</Text>
+<Text color="red">Red text</Text>
+<Text color="blue">Blue text</Text>
+<Text color="yellow">Yellow text</Text>
+<Text color="magenta">Magenta text</Text>
+<Text color="cyan">Cyan text</Text>
+<Text color="white">White text</Text>
+<Text color="gray">Gray text</Text>
+
+{/* Hex colors */}
+<Text color="#005cc5">Hex blue</Text>
+<Text color="#ffffff">Hex white</Text>
+
+{/* RGB colors */}
+<Text color="rgb(232, 131, 136)">RGB red</Text>
+<Text color="rgb(0, 255, 0)">RGB green</Text>
+```
+
+### Background Colors
+
+Use the same color formats for backgrounds:
+
+```jsx
+<Text backgroundColor="green" color="white">Green background</Text>
+<Text backgroundColor="#005cc5" color="white">Hex background</Text>
+<Text backgroundColor="rgb(232, 131, 136)" color="white">RGB background</Text>
+```
+
+### Dimmed Colors
+
+Make colors less bright:
+
+```jsx
+<Text color="red" dimColor>
+  Dimmed red text
+</Text>
+
+<Text color="green" dimColor>
+  Dimmed green text
+</Text>
+```
+
+### Color Inheritance
+
+Background colors from `<Box>` are inherited by child `<Text>` components:
+
+```jsx
+<Box backgroundColor="blue">
+  <Text>Blue background inherited</Text>
+  <Text backgroundColor="yellow">Yellow overrides blue</Text>
+  <Text>Blue background again</Text>
+</Box>
+```
+
+## Text Formatting
+
+### Bold
+
+Make text bold:
+
+```jsx
+<Text bold>This is bold text</Text>
+```
+
+### Italic
+
+Make text italic:
+
+```jsx
+<Text italic>This is italic text</Text>
+```
+
+### Underline
+
+Underline text:
+
+```jsx
+<Text underline>This is underlined text</Text>
+```
+
+### Strikethrough
+
+Add a line through text:
+
+```jsx
+<Text strikethrough>This text is crossed out</Text>
+```
+
+### Inverse
+
+Invert foreground and background colors:
+
+```jsx
+<Text inverse color="yellow">
+  Inversed yellow text
+</Text>
+```
+
+### Combining Styles
+
+Combine multiple formatting options:
+
+```jsx
+<Text color="green" bold underline>
+  Green, bold, and underlined
+</Text>
+
+<Text color="#ff0000" italic backgroundColor="black">
+  Red italic text on black background
+</Text>
+```
+
+## Complete Styling Example
+
+```jsx
+import {render, Box, Text} from 'ink';
+
+const Example = () => (
+  <Box flexDirection="column">
+    <Text color="green">I am green</Text>
+    <Text color="black" backgroundColor="white">
+      I am black on white
+    </Text>
+    <Text color="#ffffff">I am white</Text>
+    <Text bold>I am bold</Text>
+    <Text italic>I am italic</Text>
+    <Text underline>I am underline</Text>
+    <Text strikethrough>I am strikethrough</Text>
+    <Text inverse>I am inversed</Text>
+  </Box>
+);
+
+render(<Example />);
+```
+
+## Text Wrapping
+
+Control how text behaves when it exceeds container width.
+
+### Wrap Mode (Default)
+
+Text wraps to multiple lines:
+
+```jsx
+<Box width={7}>
+  <Text>Hello World</Text>
+</Box>
+// Output:
+// Hello
+// World
+```
+
+### Truncate End
+
+Cut off text at the end:
+
+```jsx
+<Box width={7}>
+  <Text wrap="truncate">Hello World</Text>
+</Box>
+// Output: 'Hello…'
+
+{/* 'truncate' is an alias for 'truncate-end' */}
+<Box width={7}>
+  <Text wrap="truncate-end">Hello World</Text>
+</Box>
+// Output: 'Hello…'
+```
+
+### Truncate Middle
+
+Cut off text in the middle:
+
+```jsx
+<Box width={7}>
+  <Text wrap="truncate-middle">Hello World</Text>
+</Box>
+// Output: 'He…ld'
+```
+
+### Truncate Start
+
+Cut off text at the beginning:
+
+```jsx
+<Box width={7}>
+  <Text wrap="truncate-start">Hello World</Text>
+</Box>
+// Output: '…World'
+```
+
+## Nested Text
+
+You can nest `<Text>` components to apply different styles:
+
+```jsx
+<Text>
+  This is <Text color="green">green</Text> and{' '}
+  <Text bold>bold</Text> text
+</Text>
+```
+
+<Note>
+Ink's text styling system uses ANSI escape codes. When using tools that manipulate strings (like `.trim()` or `.slice()`), use ANSI-aware utilities from packages like `slice-ansi` or `strip-ansi`.
+</Note>
+
+## Working with Newlines
+
+Use the `<Newline>` component for line breaks:
+
+```jsx
+import {Text, Newline} from 'ink';
+
+<Text>
+  <Text color="green">Hello</Text>
+  <Newline />
+  <Text color="red">World</Text>
+</Text>
+// Output:
+// Hello
+// World
+
+{/* Multiple newlines */}
+<Text>
+  Line 1
+  <Newline count={2} />
+  Line 3 (with blank line above)
+</Text>
+```
+
+## Practical Examples
+
+### Status Messages
+
+```jsx
+const StatusMessage = ({type, message}) => {
+  const colors = {
+    success: 'green',
+    error: 'red',
+    warning: 'yellow',
+    info: 'blue',
+  };
+
+  const symbols = {
+    success: '✓',
+    error: '✗',
+    warning: '⚠',
+    info: 'ℹ',
+  };
+
+  return (
+    <Text color={colors[type]}>
+      {symbols[type]} {message}
+    </Text>
+  );
+};
+
+// Usage:
+<StatusMessage type="success" message="Operation completed" />
+<StatusMessage type="error" message="Failed to connect" />
+```
+
+### Highlighted Code
+
+```jsx
+const Code = ({children}) => (
+  <Text
+    backgroundColor="#1e1e1e"
+    color="#d4d4d4"
+  >
+    {children}
+  </Text>
+);
+
+const Keyword = ({children}) => (
+  <Text color="#569cd6">{children}</Text>
+);
+
+const String = ({children}) => (
+  <Text color="#ce9178">{children}</Text>
+);
+
+// Usage:
+<Code>
+  <Keyword>const</Keyword> message ={' '}
+  <String>"Hello World"</String>;
+</Code>
+```
+
+### Long Text with Truncation
+
+```jsx
+const FileList = ({files}) => (
+  <Box flexDirection="column">
+    {files.map(file => (
+      <Box key={file.path} width={40}>
+        <Text wrap="truncate-middle">{file.path}</Text>
+      </Box>
+    ))}
+  </Box>
+);
+
+// Long paths like:
+// /very/long/path/to/file.txt
+// become:
+// /very/lon…le.txt
+```
+
+<Tip>
+For terminal output, it's better to use named colors (like `"green"` or `"red"`) rather than hex codes, as they adapt to the user's terminal color scheme.
+</Tip>

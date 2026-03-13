@@ -1,0 +1,381 @@
+---
+title: 'useCursor'
+description: 'Control terminal cursor position for IME support'
+---
+
+`useCursor` is a React hook that provides methods to control the terminal cursor position. This is essential for IME (Input Method Editor) support, where composing characters need to be displayed at the cursor location.
+
+## Import
+
+```jsx
+import {useCursor} from 'ink';
+```
+
+## Signature
+
+```typescript
+useCursor(): {
+  setCursorPosition: (position: {x: number; y: number} | undefined) => void;
+}
+```
+
+## Return Value
+
+<ResponseField name="setCursorPosition" type="function">
+  Set the cursor position relative to the Ink output. Pass `undefined` to hide the cursor.
+  
+  <Expandable title="Parameters">
+    <ParamField path="position" type="object | undefined">
+      Cursor position coordinates, or `undefined` to hide the cursor.
+      
+      <Expandable title="Position properties">
+        <ParamField path="x" type="number" required>
+          Column position (0-based). Use [`string-width`](https://github.com/sindresorhus/string-width) to calculate x for strings containing wide characters (CJK, emoji).
+        </ParamField>
+        <ParamField path="y" type="number" required>
+          Row position from the top of the Ink output (0 = first line).
+        </ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+## Examples
+
+### Basic Cursor Positioning
+
+Position the cursor after text:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useCursor, useInput} from 'ink';
+
+const TextInput = () => {
+  const [text, setText] = useState('');
+  const {setCursorPosition} = useCursor();
+
+  useInput((input, key) => {
+    if (key.backspace) {
+      setText(t => t.slice(0, -1));
+    } else if (input) {
+      setText(t => t + input);
+    }
+  });
+
+  // Position cursor at end of text
+  const prompt = '> ';
+  setCursorPosition({x: prompt.length + text.length, y: 1});
+
+  return (
+    <Box flexDirection="column">
+      <Text>Type here:</Text>
+      <Text>{prompt}{text}</Text>
+    </Box>
+  );
+};
+```
+
+### Wide Character Support
+
+Handle CJK characters and emoji correctly:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useCursor, useInput} from 'ink';
+import stringWidth from 'string-width';
+
+const UnicodeInput = () => {
+  const [text, setText] = useState('');
+  const {setCursorPosition} = useCursor();
+
+  useInput((input, key) => {
+    if (key.backspace) {
+      setText(t => t.slice(0, -1));
+    } else if (input) {
+      setText(t => t + input);
+    }
+  });
+
+  const prompt = '❯ ';
+  // Use string-width for accurate cursor positioning with wide chars
+  const cursorX = stringWidth(prompt) + stringWidth(text);
+  setCursorPosition({x: cursorX, y: 0});
+
+  return <Text>{prompt}{text}</Text>;
+};
+```
+
+### Multi-line Input
+
+Position cursor in multi-line text:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useCursor, useInput} from 'ink';
+
+const MultilineEditor = () => {
+  const [lines, setLines] = useState(['']);
+  const [cursorPos, setCursorPos] = useState({line: 0, col: 0});
+  const {setCursorPosition} = useCursor();
+
+  useInput((input, key) => {
+    if (key.return) {
+      // New line
+      setLines(l => [
+        ...l.slice(0, cursorPos.line + 1),
+        '',
+        ...l.slice(cursorPos.line + 1)
+      ]);
+      setCursorPos({line: cursorPos.line + 1, col: 0});
+    } else if (key.backspace) {
+      // Delete character
+      const currentLine = lines[cursorPos.line];
+      const newLine = currentLine.slice(0, -1);
+      const newLines = [...lines];
+      newLines[cursorPos.line] = newLine;
+      setLines(newLines);
+      setCursorPos({...cursorPos, col: Math.max(0, cursorPos.col - 1)});
+    } else if (input) {
+      // Add character
+      const currentLine = lines[cursorPos.line];
+      const newLine = currentLine + input;
+      const newLines = [...lines];
+      newLines[cursorPos.line] = newLine;
+      setLines(newLines);
+      setCursorPos({...cursorPos, col: cursorPos.col + 1});
+    }
+  });
+
+  // Position cursor at current line and column
+  setCursorPosition({x: cursorPos.col, y: cursorPos.line});
+
+  return (
+    <Box flexDirection="column">
+      {lines.map((line, i) => (
+        <Text key={i}>{line}</Text>
+      ))}
+    </Box>
+  );
+};
+```
+
+### Hide Cursor
+
+Hide the cursor when not editing:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useCursor, useInput} from 'ink';
+
+const EditableField = () => {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState('Initial value');
+  const {setCursorPosition} = useCursor();
+
+  useInput((input, key) => {
+    if (input === 'e') {
+      setEditing(true);
+    } else if (key.escape) {
+      setEditing(false);
+    } else if (editing) {
+      if (key.backspace) {
+        setValue(v => v.slice(0, -1));
+      } else if (input) {
+        setValue(v => v + input);
+      }
+    }
+  });
+
+  if (editing) {
+    // Show cursor when editing
+    setCursorPosition({x: value.length, y: 0});
+  } else {
+    // Hide cursor when not editing
+    setCursorPosition(undefined);
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Text color={editing ? 'cyan' : 'white'}>{value}</Text>
+      <Text dimColor>
+        {editing ? 'Press Esc to finish' : 'Press "e" to edit'}
+      </Text>
+    </Box>
+  );
+};
+```
+
+### IME Support
+
+Full IME composing support:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useCursor, useInput} from 'ink';
+import stringWidth from 'string-width';
+
+const IMEInput = () => {
+  const [text, setText] = useState('');
+  const [composing, setComposing] = useState('');
+  const {setCursorPosition} = useCursor();
+
+  useInput((input, key) => {
+    if (key.return) {
+      // Commit composing text
+      if (composing) {
+        setText(t => t + composing);
+        setComposing('');
+      }
+    } else if (key.backspace) {
+      if (composing) {
+        setComposing(c => c.slice(0, -1));
+      } else {
+        setText(t => t.slice(0, -1));
+      }
+    } else if (input) {
+      setComposing(c => c + input);
+    }
+  });
+
+  const displayText = text + composing;
+  const cursorX = stringWidth(displayText);
+  setCursorPosition({x: cursorX, y: 0});
+
+  return (
+    <Box flexDirection="column">
+      <Text>
+        {text}
+        <Text color="yellow" underline>{composing}</Text>
+      </Text>
+      <Text dimColor>Composing text shown with underline</Text>
+    </Box>
+  );
+};
+```
+
+### Form Field Cursor
+
+Position cursor in focused form fields:
+
+```jsx
+import {useState} from 'react';
+import {Box, Text, useInput, useFocus, useCursor} from 'ink';
+import stringWidth from 'string-width';
+
+const Input = ({label, value, onChange, row}) => {
+  const {isFocused} = useFocus();
+  const {setCursorPosition} = useCursor();
+
+  useInput((input, key) => {
+    if (key.backspace) {
+      onChange(value.slice(0, -1));
+    } else if (input) {
+      onChange(value + input);
+    }
+  }, {isActive: isFocused});
+
+  if (isFocused) {
+    const labelWidth = stringWidth(label + ': ');
+    setCursorPosition({x: labelWidth + stringWidth(value), y: row});
+  }
+
+  return (
+    <Box>
+      <Text color={isFocused ? 'cyan' : 'white'}>
+        {label}: {value}
+      </Text>
+    </Box>
+  );
+};
+
+const Form = () => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+
+  return (
+    <Box flexDirection="column">
+      <Text dimColor>Press Tab to switch fields</Text>
+      <Input label="Name" value={name} onChange={setName} row={1} />
+      <Input label="Email" value={email} onChange={setEmail} row={2} />
+    </Box>
+  );
+};
+```
+
+### Cursor with Offset
+
+Position cursor with layout offset:
+
+```jsx
+import {useState, useRef} from 'react';
+import {Box, Text, useCursor, useInput, useBoxMetrics} from 'ink';
+import stringWidth from 'string-width';
+
+const InputWithBorder = () => {
+  const [text, setText] = useState('');
+  const {setCursorPosition} = useCursor();
+  const boxRef = useRef();
+  const {left, top, hasMeasured} = useBoxMetrics(boxRef);
+
+  useInput((input, key) => {
+    if (key.backspace) {
+      setText(t => t.slice(0, -1));
+    } else if (input) {
+      setText(t => t + input);
+    }
+  });
+
+  if (hasMeasured) {
+    // Account for border and padding
+    const padding = 1; // Box has padding={1}
+    setCursorPosition({
+      x: left + padding + stringWidth(text),
+      y: top + padding
+    });
+  }
+
+  return (
+    <Box borderStyle="round" padding={1} ref={boxRef}>
+      <Text>{text}</Text>
+    </Box>
+  );
+};
+```
+
+## IME (Input Method Editor)
+
+IME is used for typing complex characters (e.g., Chinese, Japanese, Korean) by composing multiple keystrokes. The cursor shows where the composing text will appear.
+
+Without proper cursor positioning:
+- IME composition window may appear in the wrong location
+- Users can't see where they're typing
+- Composing characters may be hidden
+
+With `useCursor`:
+- IME window appears at the correct location
+- Visual feedback shows where text is being composed
+- Better user experience for international users
+
+## Notes
+
+<Note>
+  The cursor position is relative to the **Ink output origin**, not the entire terminal. The first line of your Ink app is y=0.
+</Note>
+
+<Note>
+  Use [`string-width`](https://github.com/sindresorhus/string-width) to calculate cursor position for strings with wide characters (CJK, emoji). Regular `.length` will give incorrect positions.
+</Note>
+
+<Note>
+  Calling `setCursorPosition(undefined)` hides the cursor. This is the default behavior until you set a position.
+</Note>
+
+<Warning>
+  The cursor position is only valid until the next render. Call `setCursorPosition()` in every render cycle to maintain the cursor at the correct position.
+</Warning>
+
+## Related Hooks
+
+- [useInput](/hooks/use-input) - Handle keyboard input where cursor should follow
+- [useFocus](/hooks/use-focus) - Show cursor only in focused components
+- [useBoxMetrics](/hooks/use-box-metrics) - Calculate cursor position relative to box layout

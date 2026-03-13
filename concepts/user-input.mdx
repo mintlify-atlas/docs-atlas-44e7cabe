@@ -1,0 +1,412 @@
+---
+title: User Input
+description: Handling keyboard input and user interactions with the useInput hook
+---
+
+## Overview
+
+Ink provides the `useInput` hook to handle keyboard input from users. It's a convenient wrapper around stdin that automatically handles raw mode and provides parsed key information.
+
+## Basic Usage
+
+The `useInput` hook calls your handler function whenever the user types:
+
+```jsx
+import {useInput, Text} from 'ink';
+
+const UserInput = () => {
+  useInput((input, key) => {
+    if (input === 'q') {
+      // User pressed 'q'
+    }
+
+    if (key.leftArrow) {
+      // Left arrow key pressed
+    }
+  });
+
+  return <Text>Press a key...</Text>;
+};
+```
+
+## Input Parameter
+
+The `input` parameter is a string containing the character(s) that were typed:
+
+```jsx
+useInput((input, key) => {
+  console.log('Input:', input);
+  // 'a' when user presses 'a'
+  // 'q' when user presses 'q'
+  // '' (empty string) for special keys like arrows
+});
+```
+
+<Note>
+If the user pastes text (multiple characters at once), the callback is called only once with the entire pasted string.
+</Note>
+
+## Key Object
+
+The `key` object provides detailed information about which key was pressed:
+
+### Arrow Keys
+
+```jsx
+useInput((input, key) => {
+  if (key.upArrow) {
+    console.log('Up arrow pressed');
+  }
+
+  if (key.downArrow) {
+    console.log('Down arrow pressed');
+  }
+
+  if (key.leftArrow) {
+    console.log('Left arrow pressed');
+  }
+
+  if (key.rightArrow) {
+    console.log('Right arrow pressed');
+  }
+});
+```
+
+### Special Keys
+
+```jsx
+useInput((input, key) => {
+  if (key.return) {
+    console.log('Enter pressed');
+  }
+
+  if (key.escape) {
+    console.log('Escape pressed');
+  }
+
+  if (key.tab) {
+    console.log('Tab pressed');
+  }
+
+  if (key.backspace) {
+    console.log('Backspace pressed');
+  }
+
+  if (key.delete) {
+    console.log('Delete pressed');
+  }
+});
+```
+
+### Navigation Keys
+
+```jsx
+useInput((input, key) => {
+  if (key.pageUp) {
+    console.log('Page Up pressed');
+  }
+
+  if (key.pageDown) {
+    console.log('Page Down pressed');
+  }
+
+  if (key.home) {
+    console.log('Home pressed');
+  }
+
+  if (key.end) {
+    console.log('End pressed');
+  }
+});
+```
+
+### Modifier Keys
+
+```jsx
+useInput((input, key) => {
+  if (key.ctrl) {
+    console.log('Ctrl is held');
+    if (input === 's') {
+      console.log('Ctrl+S pressed');
+    }
+  }
+
+  if (key.shift) {
+    console.log('Shift is held');
+  }
+
+  if (key.meta) {
+    console.log('Meta/Alt is held');
+  }
+});
+```
+
+### Enhanced Keyboard Protocol (Kitty)
+
+With the [Kitty keyboard protocol](https://sw.kovidgoyal.net/kitty/keyboard-protocol/) enabled, additional properties are available:
+
+```jsx
+// Enable in render options:
+render(<MyApp />, {kittyKeyboard: {mode: 'auto'}});
+
+// Then use in components:
+useInput((input, key) => {
+  if (key.super) {
+    console.log('Super/Cmd/Win key held');
+  }
+
+  if (key.hyper) {
+    console.log('Hyper key held');
+  }
+
+  if (key.capsLock) {
+    console.log('Caps Lock is active');
+  }
+
+  if (key.numLock) {
+    console.log('Num Lock is active');
+  }
+
+  // Event type (press, repeat, release)
+  console.log('Event type:', key.eventType);
+});
+```
+
+## Practical Examples
+
+### Exiting the App
+
+```jsx
+import {useInput, useApp, Text} from 'ink';
+
+const MyApp = () => {
+  const {exit} = useApp();
+
+  useInput((input, key) => {
+    if (input === 'q' || (input === 'c' && key.ctrl)) {
+      exit();
+    }
+  });
+
+  return <Text>Press 'q' or Ctrl+C to exit</Text>;
+};
+```
+
+### Moving a Character
+
+Here's a complete example of moving an object with arrow keys:
+
+```jsx
+import React, {useState} from 'react';
+import {render, useInput, useApp, Box, Text} from 'ink';
+
+function Robot() {
+  const {exit} = useApp();
+  const [x, setX] = useState(1);
+  const [y, setY] = useState(1);
+
+  useInput((input, key) => {
+    if (input === 'q') {
+      exit();
+    }
+
+    if (key.leftArrow) {
+      setX(Math.max(1, x - 1));
+    }
+
+    if (key.rightArrow) {
+      setX(Math.min(20, x + 1));
+    }
+
+    if (key.upArrow) {
+      setY(Math.max(1, y - 1));
+    }
+
+    if (key.downArrow) {
+      setY(Math.min(10, y + 1));
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text>Use arrow keys to move the face. Press "q" to exit.</Text>
+      <Box height={12} paddingLeft={x} paddingTop={y}>
+        <Text>^_^</Text>
+      </Box>
+    </Box>
+  );
+}
+
+render(<Robot />);
+```
+
+### Menu Navigation
+
+```jsx
+import {useState} from 'react';
+import {useInput, Box, Text} from 'ink';
+
+const Menu = ({items, onSelect}) => {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  useInput((input, key) => {
+    if (key.upArrow) {
+      setSelectedIndex(Math.max(0, selectedIndex - 1));
+    }
+
+    if (key.downArrow) {
+      setSelectedIndex(Math.min(items.length - 1, selectedIndex + 1));
+    }
+
+    if (key.return) {
+      onSelect(items[selectedIndex]);
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      {items.map((item, index) => (
+        <Text
+          key={item}
+          color={index === selectedIndex ? 'blue' : 'white'}
+          bold={index === selectedIndex}
+        >
+          {index === selectedIndex ? '> ' : '  '}{item}
+        </Text>
+      ))}
+    </Box>
+  );
+};
+
+// Usage:
+<Menu
+  items={['Option 1', 'Option 2', 'Option 3']}
+  onSelect={item => console.log('Selected:', item)}
+/>
+```
+
+### Text Input
+
+```jsx
+import {useState} from 'react';
+import {useInput, Box, Text} from 'ink';
+
+const TextInput = ({onSubmit}) => {
+  const [value, setValue] = useState('');
+
+  useInput((input, key) => {
+    if (key.return) {
+      onSubmit(value);
+      setValue('');
+    } else if (key.backspace || key.delete) {
+      setValue(value.slice(0, -1));
+    } else if (!key.ctrl && !key.meta && input) {
+      setValue(value + input);
+    }
+  });
+
+  return (
+    <Box>
+      <Text>Enter text: {value}</Text>
+    </Box>
+  );
+};
+```
+
+<Tip>
+For production text input, use [ink-text-input](https://github.com/vadimdemedes/ink-text-input), which handles complex cases like cursor movement, selection, and IME support.
+</Tip>
+
+## Controlling Input Activation
+
+Use the `isActive` option to enable/disable input handling:
+
+```jsx
+const [inputEnabled, setInputEnabled] = useState(true);
+
+useInput((input, key) => {
+  // This only runs when inputEnabled is true
+  console.log('Input received:', input);
+}, {isActive: inputEnabled});
+```
+
+This is useful when you have multiple components with `useInput` and want to control which one receives input:
+
+```jsx
+const App = () => {
+  const [activeView, setActiveView] = useState('menu');
+
+  return (
+    <>
+      <Menu isActive={activeView === 'menu'} />
+      <Editor isActive={activeView === 'editor'} />
+    </>
+  );
+};
+
+const Menu = ({isActive}) => {
+  useInput((input, key) => {
+    // Only handles input when isActive is true
+  }, {isActive});
+
+  return <Text>Menu</Text>;
+};
+```
+
+## Paste Events
+
+Use `usePaste` for handling pasted text separately from typed input:
+
+```jsx
+import {useInput, usePaste, Text} from 'ink';
+
+const MyInput = () => {
+  useInput((input, key) => {
+    // Only receives typed characters and key events
+    console.log('Typed:', input);
+  });
+
+  usePaste((text) => {
+    // Receives the full pasted string
+    console.log('Pasted:', text);
+  });
+
+  return <Text>Type or paste something...</Text>;
+};
+```
+
+<Warning>
+When using `useInput`, raw mode is automatically enabled on stdin. This means Ctrl+C won't exit by default unless you handle it explicitly or set `exitOnCtrlC: true` in render options (which is the default).
+</Warning>
+
+## Key Object Reference
+
+Here's the complete list of properties available on the `key` object:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `upArrow` | `boolean` | Up arrow key |
+| `downArrow` | `boolean` | Down arrow key |
+| `leftArrow` | `boolean` | Left arrow key |
+| `rightArrow` | `boolean` | Right arrow key |
+| `return` | `boolean` | Enter/Return key |
+| `escape` | `boolean` | Escape key |
+| `ctrl` | `boolean` | Ctrl modifier |
+| `shift` | `boolean` | Shift modifier |
+| `tab` | `boolean` | Tab key |
+| `backspace` | `boolean` | Backspace key |
+| `delete` | `boolean` | Delete key |
+| `pageDown` | `boolean` | Page Down key |
+| `pageUp` | `boolean` | Page Up key |
+| `home` | `boolean` | Home key |
+| `end` | `boolean` | End key |
+| `meta` | `boolean` | Meta/Alt key |
+| `super` | `boolean` | Super/Cmd/Win key (Kitty only) |
+| `hyper` | `boolean` | Hyper key (Kitty only) |
+| `capsLock` | `boolean` | Caps Lock active (Kitty only) |
+| `numLock` | `boolean` | Num Lock active (Kitty only) |
+| `eventType` | `'press' \| 'repeat' \| 'release'` | Event type (Kitty only) |
+
+<Note>
+All boolean properties default to `false`. The `eventType` property is `undefined` when not using the Kitty keyboard protocol.
+</Note>
