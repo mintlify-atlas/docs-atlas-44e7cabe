@@ -1,0 +1,171 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Ink",
+  "projectDescription": "React renderer for building interactive command-line applications with components and Flexbox layouts",
+  "theme": "palm",
+  "primaryColor": "#242b2c",
+  "lightColor": "#040404",
+  "darkColor": "#6a6a6d",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/app-lifecycle",
+              "concepts/flexbox-layouts",
+              "concepts/text-styling",
+              "concepts/user-input"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "components/overview",
+              "components/text",
+              "components/box",
+              "components/static",
+              "components/transform",
+              "components/newline",
+              "components/spacer"
+            ]
+          },
+          {
+            "group": "Hooks",
+            "pages": [
+              "hooks/overview",
+              "hooks/use-input",
+              "hooks/use-paste",
+              "hooks/use-app",
+              "hooks/use-focus",
+              "hooks/use-focus-manager",
+              "hooks/use-stdin",
+              "hooks/use-stdout",
+              "hooks/use-stderr",
+              "hooks/use-cursor",
+              "hooks/use-window-size",
+              "hooks/use-box-metrics",
+              "hooks/use-is-screen-reader-enabled"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/testing",
+              "guides/devtools",
+              "guides/screen-reader-support",
+              "guides/continuous-integration"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "examples/overview",
+              "examples/counter",
+              "examples/forms-and-validation",
+              "examples/lists-and-navigation",
+              "examples/progress-indicators"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Rendering",
+            "pages": [
+              "api/render",
+              "api/render-to-string"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "api/components/box",
+              "api/components/text",
+              "api/components/static",
+              "api/components/transform",
+              "api/components/newline",
+              "api/components/spacer"
+            ]
+          },
+          {
+            "group": "Hooks",
+            "pages": [
+              "api/hooks/use-input",
+              "api/hooks/use-paste",
+              "api/hooks/use-app",
+              "api/hooks/use-focus",
+              "api/hooks/use-focus-manager",
+              "api/hooks/use-stdin",
+              "api/hooks/use-stdout",
+              "api/hooks/use-stderr",
+              "api/hooks/use-cursor",
+              "api/hooks/use-window-size",
+              "api/hooks/use-box-metrics",
+              "api/hooks/use-is-screen-reader-enabled"
+            ]
+          },
+          {
+            "group": "Types",
+            "pages": [
+              "api/types/box-props",
+              "api/types/text-props",
+              "api/types/key",
+              "api/types/window-size"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "React-based component system for CLI applications",
+    "Flexbox layout engine powered by Yoga",
+    "Rich set of built-in components and hooks",
+    "Full TypeScript support with type definitions",
+    "User input handling with keyboard events",
+    "Screen reader accessibility (ARIA)",
+    "Testing utilities with renderToString",
+    "React DevTools integration"
+  ],
+  "publicApiSurface": [
+    "render",
+    "renderToString",
+    "Box",
+    "Text",
+    "Static",
+    "Transform",
+    "Newline",
+    "Spacer",
+    "useInput",
+    "usePaste",
+    "useApp",
+    "useStdin",
+    "useStdout",
+    "useStderr",
+    "useFocus",
+    "useFocusManager",
+    "useCursor",
+    "useWindowSize",
+    "useBoxMetrics",
+    "useIsScreenReaderEnabled",
+    "BoxProps",
+    "TextProps",
+    "Key",
+    "WindowSize",
+    "Instance",
+    "RenderOptions"
+  ]
+}
